@@ -1,0 +1,74 @@
+.background-image {
+  background-image: url('../../img/iitrpr1.jpg');
+  background-repeat: no-repeat;
+  background-size: cover;
+  max-width: 100%;
+  height: 100vh;
+  /* Add any additional styling properties here */
+}
+.formWrapper{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    /* background: white; */
+}
+.signature-box {
+  width: "100px";
+  height: "100px"
+}
+.leaveform {
+    width: 80%;
+    margin: 50px;
+    padding: 50px 50px;
+    outline: none;
+    font-family: 'Poppins',sans-serif;
+    /* font-size: 16px; */
+    /* color: #666; */
+    /* box-shadow: 0px 2px 1px 1px gray; */
+}
+
+.leaveform:hover {
+    box-shadow: 5px 10px 20px rgba(0, 0, 0, 0.5) !important
+}
+
+form{
+    margin: 50px 0px;
+}
+
+legend {
+    font-size:1.2em;
+    text-align: left;
+}
+
+.cardbody-color {
+    background-color: #ebf2fa;
+}
+
+.sigContainer {
+  width: 80%;
+  height: 80%;
+  margin: 0 auto;
+  background-color: #fff;
+}
+
+.sigPad {
+  border-width: 2px;
+  border: inset;
+  /* border-color: black; */
+  border-radius: 5px;
+  width: 100%;
+  height: 100%;
+}
+
+.buttons {
+  width: 100%;
+  height: 30px;
+}
+
+.sigImage {
+  background-size: 200px 50px;
+  width: 200px;
+  height: 50px;
+  background-color: white;
+}

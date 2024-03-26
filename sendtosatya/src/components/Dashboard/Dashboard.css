@@ -1,0 +1,251 @@
+.background-image-dashboard {
+  background-image: url('../../img/iitrpr1.jpg');
+  background-color: inherit;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+}
+
+@media (max-width: 768px) {
+  .background-image {
+    /* Add fallback background color for smaller screens if needed */
+    background-color: #7393b3;
+    background-image: none; /* Remove background image on smaller screens */
+  }
+}
+
+.heading{
+    /* font-family:sans-serif; */
+    padding: 5px;
+}
+
+.dashboard{
+  min-height: 100vh;
+  height: 100%;
+}
+
+.heading-line{
+    width: 100px;
+    height: 2px;
+    background-color: black;
+    text-align: center;
+    margin: 5px auto;
+    margin-bottom: 20px;
+}
+
+
+.leaves-container {
+  display: flex;
+  align-items: center;
+}
+
+.remaining-leaves i,
+.taken-leaves i {
+  /* font-size: 2em; */
+  color: red;
+}
+
+.taken-leaves i {
+  color: gray;
+}
+
+.pending {
+  color: 'red'
+}
+
+body {
+  background-color: #7E57C2;
+}
+
+.mt-100 {
+  margin-top: 200px;
+}
+
+/* .circular-progress {
+  position: relative;
+  height: 150px;
+  width: 150px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+
+.circular-progress:before {
+  content: "";
+  position: absolute;
+  height: 84%;
+  width: 84%;
+  background-color: #ffffff;
+  border-radius: 50%;
+}
+
+.value-container {
+  position: relative;
+  font-family: "Poppins", sans-serif;
+  font-size: 30px;
+  color: #231c3d;
+} */
+
+.Leaves-remaining {
+  display: flex;
+  margin-top: 30px;
+  justify-content: space-evenly;
+}
+
+.calendar {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin: auto;
+  /* border: 1px solid #ccc; */
+  border-collapse: collapse;
+  align-items: center;
+}
+
+.week {
+  display: flex;
+  flex-direction: row;
+  width: 90%;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.day {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  height: 35px;
+  font-size: 1rem;
+  /* font-size: 20px; */
+  font-weight: bold;
+  color: #333;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.header {
+  color: #fff;
+  background-color: #3b44f1;
+}
+
+.not-taken {
+  background-color: #fff;
+}
+
+.approved {
+  background-color: green;
+  color: #fff;
+}
+.disapproved {
+  background-color: red;
+  color: #fff;
+}
+.pending {
+  background-color: blue;
+  color: #fff;
+}
+
+.recent-application{
+  text-align: left;
+  border: 2px solid #7E57C2;
+}
+
+span{
+  font-size: 1.2rem;
+  font-family:'Roboto'
+}
+
+.mt-4 > button {
+  font-size: 1.0rem;
+  font-family: 'Roboto';
+  /* font-size: 25px; */
+  /* font-family:'Times New Roman', Times, serif; */
+}
+
+.mt-4 > button {
+  /* font-size: 20px; */
+  /* font-family: 'Times New Roman', Times, serif; */
+  margin-top: 10px;
+}
+
+.signature-box {
+  width: "100px";
+  height: "100px"
+}
+
+#profile{
+  /* border-radius: 8px; */
+  box-shadow: 0 20px 24px rgba(0, 0, 0, 0.2);
+  border-radius: 50px;
+}
+
+#profile_parent{
+  /* display: flex; */
+  margin-top: 10%;
+  align-items: center;
+}
+
+.recent-box {
+  border-radius: 8px;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+  text-align: left;
+}
+
+.recent-application-title{
+  margin-bottom: 10px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.recent-application>div{
+  font-family:Roboto; 
+}
+
+.card-header{
+  font-size: 1.5em;
+  /* font-size: 25px; */
+  font-weight: bolder;
+}
+
+.dates{
+  display: flex;
+  justify-content: space-between;
+  width: 60%;
+}
+
+.content{
+  display: flex;
+  justify-content: space-between;
+}
+
+.buttons_dashboard{
+  display: flex;
+  flex-direction:column;
+  text-align: right;
+  width: 25%;
+}
+
+.btn-sm{
+  font-size: 1rem;
+  margin-top: 5px;
+}
+
+.date, .card-title{
+  font-size: 1.2em;
+}
+
+.calendar-panel{
+  display: flex;
+  align-items: center;
+}
+
+.arrow{
+  height: 1.5em;
+  width: 1.5em;
+}
+
+
+
