@@ -248,7 +248,7 @@ export default function Table({ title, headers, initialData, from }) {
 					</Button>
 				</Modal.Footer>
 			</Modal>
-			<div className="crud shadow-lg p-3 mb-5 bg-body rounded">
+			<div className="crud shadow-lg p-3 mb-5 bg-body rounded mt-20">
 				<div className="row ">
 					<div className="row text-align-center mb-5 mt-2">
 						<h2>
@@ -270,6 +270,8 @@ export default function Table({ title, headers, initialData, from }) {
 					</div>
 				</div>
 				<div className="d-flex flex-wrap justify-content-center m-3">
+					
+					
 					<button
 						className={displayTab === 0 ? "isActive tab-button" : "tab-button"}
 						onClick={() => setDisplayTab(0)}

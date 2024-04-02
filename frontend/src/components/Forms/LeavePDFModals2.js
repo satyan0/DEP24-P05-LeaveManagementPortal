@@ -207,7 +207,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
         var imgData = canvas.toDataURL("image/png");
         // window.open(imgData, "toDataURL() image", "width=800, height=800");
 
-        pdf.addImage(imgData, "JPEG", 100, 50);
+        pdf.addImage(imgData, "JPEG", 35, 50);
         const input1 = document.getElementById("second-page-" + leave_id);
         html2canvas(input1)
           .then((canvas) => {
@@ -216,7 +216,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
             var imgData = canvas.toDataURL('image/png');
             // window.open(imgData, "toDataURL() image", "width=800, height=800");
             pdf.addPage();
-            pdf.addImage(imgData, 'JPEG', 100, 50);
+            pdf.addImage(imgData, 'JPEG', 35, 50);
             pdf.save(`${"leave-" + leave_id}.pdf`);
           })
 

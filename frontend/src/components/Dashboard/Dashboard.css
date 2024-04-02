@@ -179,7 +179,7 @@ span{
 #profile{
   /* border-radius: 8px; */
   box-shadow: 0 20px 24px rgba(0, 0, 0, 0.2);
-  border-radius: 50px;
+  border-radius: 20px;
 }
 
 #profile_parent{

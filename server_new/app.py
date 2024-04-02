@@ -45,8 +45,8 @@ app.config.update(SESSION_COOKIE_SAMESITE="None", SESSION_COOKIE_SECURE=True)
 db = mysql.connector.connect(
 	host="localhost",
 	user="root",
-	passwd="Crackiitjee",
-	database="leavem"
+	passwd="mysql123",
+	database="trail"
 )
 
 success_code = Response(status=200)

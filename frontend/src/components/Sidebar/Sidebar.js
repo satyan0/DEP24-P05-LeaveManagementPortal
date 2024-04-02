@@ -59,7 +59,7 @@ const Sidebar = () => {
   return (
     <>
       <IconContext.Provider value={{ color: '#fff' }}>
-        <Nav>
+        <Nav className="rounded-xl transition-all sticky mx-10 top-4 z-0 py-3 shadow-md shadow-blue-gray-500/5">
           <NavIcon to='#'>
             <FaIcons.FaBars onClick={showSidebar} />
           </NavIcon>
@@ -88,7 +88,9 @@ const Sidebar = () => {
             } /> : ''}</div>
           </div>
         </Nav>
-        <SidebarNav sidebar={sidebar}>
+        <SidebarNav 
+        
+        sidebar={sidebar}>
           <SidebarWrap>
             <NavIcon to='#'>
               <AiIcons.AiOutlineClose onClick={showSidebar} />
