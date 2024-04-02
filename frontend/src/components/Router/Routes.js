@@ -12,6 +12,8 @@ import LeavePDFModals from "../Forms/LeavePDFModals";
 import LeavePDFModalsNonCasual from "../Forms/LeavePDFModals2";
 import PGLeavePdfModal from "../Forms/PGpdf";
 import { useAuth } from "../../contexts/AuthContext";
+import Sidebar from "../Sidebar/Sidebar";
+import TopNavbar from "../Sidebar/TopNavbar";
 
 const Paths = (props) => {
   const { currentUser } = useAuth();
@@ -23,7 +25,18 @@ const Paths = (props) => {
           path="/"
           element={<PrivateRoute user={["all"]} toast={props.toast} />}
         >
-          <Route path="/" element={<Dashboard toast={props.toast} />} />
+          <Route
+            path="/"
+            element={
+              <div className="flex-row min-h-screen bg-blue-gray-50/50">
+                <Sidebar />
+                <div className="p-4 xl:ml-80">
+                  <TopNavbar />
+                  <Dashboard toast={props.toast} />
+                </div>
+              </div>
+            }
+          />
         </Route>
         <Route
           path="/navigate/applyleave"
@@ -36,7 +49,15 @@ const Paths = (props) => {
         >
           <Route
             path="/navigate/applyleave"
-            element={<ApplyLeaveComponent toast={props.toast} />}
+            element={
+              <div className="flex-row min-h-screen bg-blue-gray-50/50">
+                <Sidebar />
+                <div className="p-4 xl:ml-80">
+                  <TopNavbar />
+                  <ApplyLeaveComponent toast={props.toast} />
+                </div>
+              </div>
+            }
           />
         </Route>
         <Route
@@ -47,7 +68,15 @@ const Paths = (props) => {
         >
           <Route
             path="/navigate/updateleave"
-            element={<UpdateLeave toast={props.toast} />}
+            element={
+              <div className="flex-row min-h-screen bg-blue-gray-50/50">
+                <Sidebar />
+                <div className="p-4 xl:ml-80">
+                  <TopNavbar />
+                  <UpdateLeave toast={props.toast} />
+                </div>
+              </div>
+            }
           />
         </Route>
         <Route
@@ -56,7 +85,15 @@ const Paths = (props) => {
         >
           <Route
             path="/navigate/pastapplications"
-            element={<PastApplications toast={props.toast} />}
+            element={
+              <div className="flex-row min-h-screen bg-blue-gray-50/50">
+                <Sidebar />
+                <div className="p-4 xl:ml-80">
+                  <TopNavbar />
+                  <PastApplications toast={props.toast} />
+                </div>
+              </div>
+            }
           />
         </Route>
         <Route
@@ -66,7 +103,16 @@ const Paths = (props) => {
           <Route
             path="/check_applications/casual/:id"
             element={
-              <LeavePDFModals toast={props.toast} from="check_applications" />
+              <div className="flex-row min-h-screen bg-blue-gray-50/50">
+                <Sidebar />
+                <div className="p-4 xl:ml-80">
+                  <TopNavbar />
+                  <LeavePDFModals
+                    toast={props.toast}
+                    from="check_applications"
+                  />
+                </div>
+              </div>
             }
           ></Route>
         </Route>
@@ -78,7 +124,16 @@ const Paths = (props) => {
           <Route
             path="/past_applications/casual/:id"
             element={
-              <LeavePDFModals toast={props.toast} from="past_applications" />
+              <div className="flex-row min-h-screen bg-blue-gray-50/50">
+                <Sidebar />
+                <div className="p-4 xl:ml-80">
+                  <TopNavbar />
+                  <LeavePDFModals
+                    toast={props.toast}
+                    from="past_applications"
+                  />
+                </div>
+              </div>
             }
           ></Route>
         </Route>
@@ -89,7 +144,16 @@ const Paths = (props) => {
           <Route
             path="/past_applications/pg_applications/:id"
             element={
-              <PGLeavePdfModal toast={props.toast} from="past_applications" />
+              <div className="flex-row min-h-screen bg-blue-gray-50/50">
+                <Sidebar />
+                <div className="p-4 xl:ml-80">
+                  <TopNavbar />
+                  <PGLeavePdfModal
+                    toast={props.toast}
+                    from="past_applications"
+                  />
+                </div>
+              </div>
             }
           ></Route>
         </Route>
@@ -100,7 +164,16 @@ const Paths = (props) => {
           <Route
             path="/check_applications/pg_applications/:id"
             element={
-              <PGLeavePdfModal toast={props.toast} from="check_applications" />
+              <div className="flex-row min-h-screen bg-blue-gray-50/50">
+                <Sidebar />
+                <div className="p-4 xl:ml-80">
+                  <TopNavbar />
+                  <PGLeavePdfModal
+                    toast={props.toast}
+                    from="check_applications"
+                  />
+                </div>
+              </div>
             }
           ></Route>
         </Route>
@@ -111,10 +184,16 @@ const Paths = (props) => {
           <Route
             path="/check_applications/non_casual/:id"
             element={
-              <LeavePDFModalsNonCasual
-                toast={props.toast}
-                from="check_applications"
-              />
+              <div className="flex-row min-h-screen bg-blue-gray-50/50">
+                <Sidebar />
+                <div className="p-4 xl:ml-80">
+                  <TopNavbar />
+                  <LeavePDFModalsNonCasual
+                    toast={props.toast}
+                    from="check_applications"
+                  />
+                </div>
+              </div>
             }
           ></Route>
         </Route>
@@ -126,10 +205,16 @@ const Paths = (props) => {
           <Route
             path="/past_applications/non_casual/:id"
             element={
-              <LeavePDFModalsNonCasual
-                toast={props.toast}
-                from="past_applications"
-              />
+              <div className="flex-row min-h-screen bg-blue-gray-50/50">
+                <Sidebar />
+                <div className="p-4 xl:ml-80">
+                  <TopNavbar />
+                  <LeavePDFModalsNonCasual
+                    toast={props.toast}
+                    from="past_applications"
+                  />
+                </div>
+              </div>
             }
           ></Route>
         </Route>
@@ -140,7 +225,15 @@ const Paths = (props) => {
         >
           <Route
             path="/navigate/dates"
-            element={<Dates toast={props.toast} />}
+            element={
+              <div className="flex-row min-h-screen bg-blue-gray-50/50">
+                <Sidebar />
+                <div className="p-4 xl:ml-80">
+                  <TopNavbar />
+                  <Dates toast={props.toast} />
+                </div>
+              </div>
+            }
           />
         </Route>
         <Route
@@ -154,12 +247,18 @@ const Paths = (props) => {
         >
           <Route
             path="/navigate/checkapplications"
-            element={<CheckLeaves toast={props.toast} />}
+            element={
+              <div className="flex-row min-h-screen bg-blue-gray-50/50">
+                <Sidebar />
+                <div className="p-4 xl:ml-80">
+                  <TopNavbar />
+                  <CheckLeaves toast={props.toast} />
+                </div>
+              </div>
+            }
           />
         </Route>
-        <Route path="/login" element={
-          <Login toast={props.toast} />
-        } />
+        <Route path="/login" element={<Login toast={props.toast} />} />
       </Routes>
     </>
   );
