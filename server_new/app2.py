@@ -40,8 +40,8 @@ app.config.update(SESSION_COOKIE_SAMESITE="None", SESSION_COOKIE_SECURE=True)
 db = mysql.connector.connect(
 	host="localhost",
 	user="root",
-	passwd="mysql123",
-	database="trail"
+	passwd="MyNewPass",
+	database="leavem"
 )
 
 success_code = Response(status=200)
@@ -333,6 +333,70 @@ def insert_leave(leave, signature, document):
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		return "first" + str(E) + str(exc_tb.tb_lineno)
 
+def check_leave_balance(cursor, user_id, nature, type_of_leave, duration):
+    try:
+        if nature.lower().startswith("casual"):
+            if type_of_leave == "RESTRICTED HOLIDAY":
+                total_leaves_field = "total_restricted_leaves"
+                taken_leaves_field = "taken_restricted_leaves"
+            elif type_of_leave == "SPECIAL CASUAL LEAVE":
+                total_leaves_field = "total_scl_leaves"
+                taken_leaves_field = "taken_scl_leaves"
+            elif type_of_leave == "CASUAL LEAVE":
+                total_leaves_field = "total_casual_leaves"
+                taken_leaves_field = "taken_casual_leaves"
+            else:
+                print("Invalid type of leave")
+                return False
+            cursor.execute(f"SELECT {total_leaves_field}, {taken_leaves_field} FROM leaves_data WHERE user_id = %s", (user_id,))
+        elif nature.lower().startswith("non casual"):
+            print("shit going in here right")
+            taken_leaves_field = util.leaves_data_map["taken_non_casual_leave"]
+            cursor.execute(f"SELECT total_non_casual_leave, {taken_leaves_field} FROM leaves_data WHERE user_id = %s", (user_id,))
+        else:
+            print("Invalid nature of leave")
+            return False
+        
+        row = cursor.fetchone()
+        
+        if row:
+            total_leaves, taken_leaves = row
+            available_leaves = total_leaves - taken_leaves
+            if available_leaves >= int(duration):
+                return True
+            else:
+                print("Error: Balance not enough for the nature of leave")
+                return False
+        else:
+            # If no row is found for the user, assume no leave balance.
+            print("No row found for user")
+            return False
+    except Exception as e:
+        # Handle exceptions here, either log or raise as appropriate.
+        print("Exception getting balance:", e)
+        return False
+
+User
+def check_pg_leave_balance(cursor, user_id, duration):
+    try:
+        cursor.execute("SELECT total_pg_leaves, taken_pg_leaves FROM leaves_data WHERE user_id = %s", (user_id,))
+        row = cursor.fetchone()
+        if row:
+            total_pg_leaves, taken_pg_leaves = row
+            available_pg_leaves = total_pg_leaves - taken_pg_leaves
+            if available_pg_leaves >= int(duration):
+                return True
+            else:
+                print("error: balance not enough")
+                return False
+        else:
+            # If no row is found for the user, assume no leave balance.
+            print("No row found for user")
+            return False
+    except Exception as e:
+        # Handle exceptions here, either log or raise as appropriate.
+        print("exception getting balance:", e)
+        return False
 def insert_pg_leave(leave, signature, document):
 	try:
 		db.reconnect()
