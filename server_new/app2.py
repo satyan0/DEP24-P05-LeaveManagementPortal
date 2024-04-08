@@ -271,6 +271,11 @@ def insert_leave(leave, signature, document):
 		user_id = data['user_id']
 		department = data['department']
 		position = data['position']
+
+		sufficient_balance = check_leave_balance(cursor, user_id, leave['form_nature'], leave['form_type_of_leave'], leave['form_duration'])
+		if not sufficient_balance:
+			return "Insufficient leave balance", None
+
 		if signature:
 			signature_binary = bytes(signature.values())
 			# print("Signature : ", signature)
@@ -376,7 +381,6 @@ def check_leave_balance(cursor, user_id, nature, type_of_leave, duration):
         print("Exception getting balance:", e)
         return False
 
-User
 def check_pg_leave_balance(cursor, user_id, duration):
     try:
         cursor.execute("SELECT total_pg_leaves, taken_pg_leaves FROM leaves_data WHERE user_id = %s", (user_id,))
@@ -419,6 +423,11 @@ def insert_pg_leave(leave, signature, document):
 			file_data = leave['form_filedata']
 		else:
 			file_data = ''
+
+		# Check leave balance before inserting the leave
+		sufficient_balance = check_pg_leave_balance(cursor, user_id, leave['form_duration'])
+		if not sufficient_balance:
+			return "Insufficient leave balance", None
 		cursor.execute("UPDATE users SET signature = %s WHERE user_id = %s", (signature_binary, user_id ))
 		new_leave_id = get_new_pg_leave_id(cursor) 
 
