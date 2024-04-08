@@ -150,7 +150,7 @@ export default function Dashboard({ toast }) {
   return (
     <div
       class="dashboard background-image-dashboard"
-      style={{ margin: "0px", height: "100%", backgroundColor: "aliceblue" }}
+      style={{ margin: "0px", height: "100%"}}
     >
       <div className="">
         <div class="container">

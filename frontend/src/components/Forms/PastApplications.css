@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css?family=Assistant');
 .container-background {
-    background-image: url('../../img/iitrpr1.jpg'); /* Adjust the path accordingly */
+    background-image: url(''); /* Adjust the path accordingly */
     background-repeat: no-repeat;
     background-size: cover;
     padding: 20px; /* Adjust padding as needed */
@@ -8,7 +8,7 @@
 
 body {
     font-family: Assistant, sans-serif;
-    background-image: url('../../img/iitrpr1.jpg'); /* Adjust the path accordingly */
+    background-image: url(''); /* Adjust the path accordingly */
     background-repeat: no-repeat;
     background-size: cover;
 }

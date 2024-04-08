@@ -64,7 +64,7 @@ export default function PastApplications({ toast }) {
 	}, []);
 
 	return (
-		<div className="background-image">
+		<div className="bg-inherit">
 			<br />
 			{data ? (
 				<Table

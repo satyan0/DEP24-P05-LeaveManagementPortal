@@ -68,7 +68,7 @@ def get_error_response(error):
 	}
 
 def get_success_response(data):
-	print("yo")
+	# print("yo")
 	return {
 		"status": "success",
 		"data": data
@@ -608,11 +608,11 @@ def login_oauth():
 		if (not check_user(data.get('email'))):
 			return get_error_response("User not Allowed here")
 		session.clear()
-		print("hello1")
+		# print("hello1")
 		session['logged_in'] = True
 		session['user_info'] = data
 		session['user_info'].update(get_user_dic(email=data.get('email')))
-		print("hello")
+		# print("hello")
 		message = ''
 		print('session info is ', session['user_info'])
 		# if 'pg' in data['position']:
@@ -737,8 +737,7 @@ def past_applications():
 		db.reconnect()
 		connect = db
 		cursor = connect.cursor()	
-		# print("this shit")	
-		print("go")
+		# print("go")
 
 		if 'pg' in position:
 			cursor.execute("SELECT * FROM pg_leaves WHERE user_id = %s", (user_id, ))

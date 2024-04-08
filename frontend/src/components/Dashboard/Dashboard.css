@@ -1,6 +1,6 @@
 .background-image-dashboard {
-  background-image: url('../../img/iitrpr1.jpg');
-  background-color: inherit;
+  background-image: url('');
+  /* background-color: inherit; */
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center;
@@ -9,7 +9,7 @@
 @media (max-width: 768px) {
   .background-image {
     /* Add fallback background color for smaller screens if needed */
-    background-color: #7393b3;
+    /* background-color: #7393b3; */
     background-image: none; /* Remove background image on smaller screens */
   }
 }
