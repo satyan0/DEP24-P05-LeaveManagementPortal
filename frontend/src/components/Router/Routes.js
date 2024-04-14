@@ -240,7 +240,7 @@ const Paths = (props) => {
           path="/navigate/checkapplications"
           element={
             <PrivateRoute
-              user={["admin", "faculty", "hod", "dean", "office", "registrar"]}
+              user={["admin", "faculty", "hod", "dean", "office", "registrar", "ar", "dr", "supdt"]}
               toast={props.toast}
             />
           }

@@ -240,28 +240,59 @@ const LeavePDFModals = ({ toast, from }) => {
     return leave?.status
   }
 
-  function get_office_status_element(leave) {
-    if (!leave) return ''
+  function get_office_status_element(leave, position = null) {
+    if (!leave) return '';
     let imageUrl = "";
-    if (leave.office_sig && leave.office_sig[0]) {
-      imageUrl = "data:image/png;base64," + String(leave.office_sig);
+    let status = leave.status.toLowerCase();
+    
+    if (position === "ar" && leave.ar_dr_supdt_sig && leave.ar_dr_supdt_sig[0]) {
+        imageUrl = "data:image/png;base64," + String(leave.ar_dr_supdt_sig);
+    } else if (position === "dr" && leave.ar_dr_supdt_sig && leave.ar_dr_supdt_sig[0]) {
+        imageUrl = "data:image/png;base64," + String(leave.ar_dr_supdt_sig);
+    } else if (position === "supdt" && leave.ar_dr_supdt_sig && leave.ar_dr_supdt_sig[0]) {
+        imageUrl = "data:image/png;base64," + String(leave.ar_dr_supdt_sig);
+    } else if (!position && leave.office_sig && leave.office_sig[0]) {
+        imageUrl = "data:image/png;base64," + String(leave.office_sig);
     }
+
     if (imageUrl.length) {
-      return (
-        <img
-          style={{
-            maxHeight: "60px",
-            maxWidth: "450px",
-            width: "40%",
-          }}
-          src={imageUrl}
-          alt="Signature"
-        />
-      )
+        return (
+            <img
+                style={{
+                    maxHeight: "60px",
+                    maxWidth: "450px",
+                    width: "40%",
+                }}
+                src={imageUrl}
+                alt="Signature"
+            />
+        );
     }
     return '';
+}
 
-  }
+  // function get_office_status_element(leave) {
+  //   if (!leave) return ''
+  //   let imageUrl = "";
+  //   if (leave.office_sig && leave.office_sig[0]) {
+  //     imageUrl = "data:image/png;base64," + String(leave.office_sig);
+  //   }
+  //   if (imageUrl.length) {
+  //     return (
+  //       <img
+  //         style={{
+  //           maxHeight: "60px",
+  //           maxWidth: "450px",
+  //           width: "40%",
+  //         }}
+  //         src={imageUrl}
+  //         alt="Signature"
+  //       />
+  //     )
+  //   }
+  //   return '';
+
+  // }
 
   useEffect(() => {
     async function test() {
@@ -505,7 +536,7 @@ const LeavePDFModals = ({ toast, from }) => {
                 <div className="col-4" style={{ border: "1px solid" }}>
                   {leave?.duration}
                 </div>
-                <div className="col-4" style={{ border: "1px solid" }}>
+                <div className="col-4 " style={{ border: "1px solid" }}>
                   {leave ? (leave[map[leave.type_of_leave][0]] - leave[map[leave.type_of_leave][1]] - leave.duration) : ""}
                 </div>
               </div>
@@ -515,13 +546,15 @@ const LeavePDFModals = ({ toast, from }) => {
                   <br />
                   <br />
                   <br />
-                  {get_office_status_element(leave)}
+                  {get_office_status_element(leave, null)}
                   <br />
                   सम्बंधित सहायक (विभाग)/(अनुमानित)/Dealing Asstt.
                   (Deptt.)/(Estt.)
                 </div>
-                <div className="col-6">
+                <div className="col-6 ">
                   <br />
+                  <br />
+                  {get_office_status_element(leave, currentUser?.position)}
                   <br />
                   <br />
                   अधी./सहा.कु ऱसलिव/उऩकु ऱसलिव/Supdt./AR/DR
@@ -634,7 +667,7 @@ const LeavePDFModals = ({ toast, from }) => {
             ) : (
               ""
             )}
-            {(from === "check_applications" && ['office'].includes(currentUser?.position)) ? (
+            {(from === "check_applications" && (['ar'].includes(currentUser?.position)||['office'].includes(currentUser?.position))) ? (
               <>
                 <Row>
                   <Col>

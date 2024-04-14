@@ -67,15 +67,15 @@ const Sidebar = () => {
               }
               if (currentUser && item.title == "Login") {
                 return <></>;
-              } else if (item.title == "Logout") {
-                return (
-                  <SubMenu
-                    item={item}
-                    key={index}
-                    showSidebar={showSidebar}
-                    currentUser={currentUser}
-                  />
-                );
+              // } else if (item.title == "Logout") {
+              //   return (
+              //     <SubMenu
+              //       item={item}
+              //       key={index}
+              //       showSidebar={showSidebar}
+              //       currentUser={currentUser}
+              //     />
+              //   );
               } else {
                 return (
                   <SubMenu

@@ -256,28 +256,62 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
     return leave?.status
   }
 
-  function get_office_status_element(leave) {
-    if (!leave) return ''
+  // function get_office_status_element(leave) {
+  //   if (!leave) return ''
+  //   let imageUrl = "";
+  //   if (leave.office_sig && leave.office_sig[0]) {
+  //     imageUrl = "data:image/png;base64," + String(leave.office_sig);
+  //   }
+  //   if (imageUrl.length) {
+  //     return (
+  //       <img
+  //         style={{
+  //           maxHeight: "60px",
+  //           maxWidth: "450px",
+  //           width: "40%",
+  //         }}
+  //         src={imageUrl}
+  //         alt="Signature"
+  //       />
+  //     )
+  //   }
+  //   return '';
+
+  // }
+
+  function get_office_status_element(leave, position = null) {
+    if (!leave) return '';
     let imageUrl = "";
-    if (leave.office_sig && leave.office_sig[0]) {
-      imageUrl = "data:image/png;base64," + String(leave.office_sig);
+    let status = leave.status.toLowerCase();
+    
+    if (position === "ar" && leave.ar_dr_supdt_sig && leave.ar_dr_supdt_sig[0]) {
+        imageUrl = "data:image/png;base64," + String(leave.ar_dr_supdt_sig);
+    } else if (position === "registrar" && leave.registrar_sig && leave.registrar_sig[0]) {
+      imageUrl = "data:image/png;base64," + String(leave.registrar_sig);
+    } else if (position === "dr" && leave.ar_dr_supdt_sig && leave.ar_dr_supdt_sig[0]) {
+        imageUrl = "data:image/png;base64," + String(leave.ar_dr_supdt_sig);
+    } else if (position === "supdt" && leave.ar_dr_supdt_sig && leave.ar_dr_supdt_sig[0]) {
+        imageUrl = "data:image/png;base64," + String(leave.ar_dr_supdt_sig);
+    } else if (!position && leave.office_sig && leave.office_sig[0]) {
+        imageUrl = "data:image/png;base64," + String(leave.office_sig);
     }
+
     if (imageUrl.length) {
-      return (
-        <img
-          style={{
-            maxHeight: "60px",
-            maxWidth: "450px",
-            width: "40%",
-          }}
-          src={imageUrl}
-          alt="Signature"
-        />
-      )
+        return (
+            <img
+                style={{
+                    maxHeight: "60px",
+                    maxWidth: "450px",
+                    width: "40%",
+                }}
+                src={imageUrl}
+                alt="Signature"
+            />
+        );
     }
     return '';
+}
 
-  }
 
   useEffect(() => {
     async function test() {
@@ -1011,15 +1045,16 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
               <br />
               <br />
               <div className="row">
-                <div className="col-4">
-                  {get_office_status_element(leave)}<br />
+                <div className="flex flex-col justify-center items-center col-4">
+                  {get_office_status_element(leave, null)}<br />
                   सम्बंधित सहायक (विभाग)/(अनुमानित)/Dealing Asstt.
                   (Deptt.)/(Estt.)
                 </div>
-                <div className="col-4">
+                <div className="flex flex-col justify-center items-center col-4">
+                  {get_office_status_element(leave, currentUser?.position)}
                   अधी./सहा.कु ऱसलिव/उऩकु ऱसलिव/Supdt./AR/DR
                 </div>
-                <div className="col-4">रजिस्ट्रार/Registrar</div>
+                <div className="flex flex-col justify-center items-center col-4">रजिस्ट्रार/Registrar</div>
               </div>
             </div>
             <hr />
@@ -1064,7 +1099,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
             )}
             <hr />
           </div>
-          <div>
+          <div className="flex flex-col justify-center items-center pb-4">
             {(from === "check_applications" && ['hod', 'dean', 'faculty'].includes(currentUser?.position)) ? (
               <>
                 <Row>
@@ -1134,7 +1169,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
             ) : (
               ""
             )}
-            {(from === "check_applications" && ['office'].includes(currentUser?.position)) ? (
+            {(from === "check_applications" && (['ar'].includes(currentUser?.position)||['office'].includes(currentUser?.position))) ? (
               <>
                 <Row>
                   <Col>

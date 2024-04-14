@@ -26,7 +26,7 @@ const TopNavbar = () => {
 
   return (
     <>
-      <Nav className="rounded-xl transition-all sticky mx-10 top-4 z-0 py-3 shadow-md shadow-blue-gray-500/5">
+      <Nav className="rounded-xl transition-all sticky mx-10 top-4 z-50 py-3 shadow-md shadow-blue-gray-500/5">
         <div
           className="flex justify-center gap-2"
           style={{ width: "400px", fontSize: "20px", color: "white" }}

@@ -134,23 +134,23 @@ export default function Login(props) {
                   <div className="flex justify-center p-5">
                     <img className="h-36" src={IITROPARLOGO}/>                    
                   </div>
-                  <div className="mb-3 mt-md-4">
+                  <div className=" mb-3 mt-md-4">
                     <h2
-                      className="fw-bold mb-2 text-uppercase "
+                      className="text-center fw-bold mb-2 text-uppercase"
                       style={{ color: "black" }}
                     >
                       Leave Management Portal
                     </h2>
                     <hr className="w-35"></hr>
                     {/* <p className=" mb-5" style={{color:"white"}}>Please enter your email</p> */}
-                    <div className="mb-3">
+                    <div className="flex justify-center mb-3">
                       <Form>
-                        <Form.Group className="mb-3" controlId="formBasicEmail">
+                        <Form.Group className=" mb-3" controlId="formBasicEmail">
                           <Form.Label
                             className="text-center"
                             style={{ color: "black" }}
                           >
-                            Email address
+                            Email Address
                           </Form.Label>
                           <div className="mb-33">
                             <Form.Control

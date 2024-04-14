@@ -43,7 +43,7 @@ export const SidebarData = [
         path: '/navigate/checkapplications',
         icon: <IoIcons.IoIosPaper />,
         cName: 'sub-nav',
-        allowed: ['admin', 'faculty', 'hod', 'dean', 'office', 'registrar']
+        allowed: ['admin', 'faculty', 'hod', 'dean', 'office', 'registrar', 'ar', 'dr', 'supdt']
       },
       {
         title: 'Dates',

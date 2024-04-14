@@ -40,8 +40,8 @@ app.config.update(SESSION_COOKIE_SAMESITE="None", SESSION_COOKIE_SECURE=True)
 db = mysql.connector.connect(
 	host="localhost",
 	user="root",
-	passwd="MyNewPass",
-	database="leavem"
+	passwd="mysql123",
+	database="trail"
 )
 
 success_code = Response(status=200)
@@ -68,7 +68,7 @@ def get_error_response(error):
 	}
 
 def get_success_response(data):
-	# print("yo")
+	print("yo")
 	return {
 		"status": "success",
 		"data": data
@@ -355,7 +355,6 @@ def check_leave_balance(cursor, user_id, nature, type_of_leave, duration):
                 return False
             cursor.execute(f"SELECT {total_leaves_field}, {taken_leaves_field} FROM leaves_data WHERE user_id = %s", (user_id,))
         elif nature.lower().startswith("non casual"):
-            print("shit going in here right")
             taken_leaves_field = util.leaves_data_map["taken_non_casual_leave"]
             cursor.execute(f"SELECT total_non_casual_leave, {taken_leaves_field} FROM leaves_data WHERE user_id = %s", (user_id,))
         else:
@@ -681,11 +680,11 @@ def login_oauth():
 		if (not check_user(data.get('email'))):
 			return get_error_response("User not Allowed here")
 		session.clear()
-		# print("hello1")
+		print("hello1")
 		session['logged_in'] = True
 		session['user_info'] = data
 		session['user_info'].update(get_user_dic(email=data.get('email')))
-		# print("hello")
+		print("hello")
 		message = ''
 		print('session info is ', session['user_info'])
 		# if 'pg' in data['position']:
@@ -810,7 +809,8 @@ def past_applications():
 		db.reconnect()
 		connect = db
 		cursor = connect.cursor()	
-		# print("go")
+		# print("this shit")	
+		print("go")
 
 		if 'pg' in position:
 			cursor.execute("SELECT * FROM pg_leaves WHERE user_id = %s", (user_id, ))
@@ -965,7 +965,7 @@ def get_leave_info_by_id():
 				# 	# continue
 				# elif col in ['ta_sig', 'advisor_sig']:
 				# 	print("niggaaaaa")
-				elif col in ['signature', 'ta_sig','advisor_sig', 'hod_sig', 'dean_sig', 'office_sig'] and val is not None:
+				elif col in ['signature', 'ta_sig','advisor_sig', 'hod_sig', 'dean_sig', 'office_sig', 'ar_dr_supdt_sig'] and val is not None:
 					val = base64.b64encode(val).decode('utf-8')
 					# print('nigga')
 					# print("Encoded value of", col, ":", val)
@@ -1019,6 +1019,10 @@ def check_applications():
 		elif position == 'office':
 			cursor.execute("SELECT * FROM leaves where department=%s", (department,))
 			leaves = cursor.fetchall()
+		elif position == 'registrar' or position == 'ar' or position == 'dr' or position == 'supdt':
+			cursor.execute("SELECT * FROM leaves")
+			leaves = cursor.fetchall()
+
 		else:
 			leaves = []
 
@@ -1042,7 +1046,7 @@ def check_applications():
 			payload.append(content)
 
 		# now process pg leaves
-		if not position == 'office':
+		if position not in ['office', 'registrar', 'ar', 'dr', 'supdt']:
 			cursor.execute('SELECT * FROM pg_leaves WHERE advisor = %s or ta_instructor = %s', (session['user_info']['email'], session['user_info']['email']))
 		else:
 			cursor.execute('SELECT * FROM pg_leaves WHERE department =%s', (department, ))
@@ -1346,27 +1350,71 @@ def approve_leave():
 		return get_success_response(f"Leave with ID: {leave_id} is approved")
 	except Exception as E:
 		return get_error_response(E)
+	
 
 @app.route('/submit_office_signature', methods=['POST'])
 @cross_origin(supports_credentials=True)
 def submit_office_signature():
-	try:
-		if (not session.get('user_info') or not check_user(session.get('user_info')['email'])):
-			return get_error_response("Forbidden")
-		leave_id = request.json['leave_id']
-		signature = request.json['signature']
-		signature_binary = bytes(signature.values())
-		user = get_user_dic(session['user_info']['email'])
-		db.reconnect()
-		connect = db
-		cursor = connect.cursor()
-		cursor.execute(
-				"UPDATE leaves SET office_sig= %s WHERE leave_id = %s", (signature_binary, leave_id ))
-		cursor.execute("UPDATE users SET signature = %s WHERE user_id = %s", (signature_binary, user["user_id"]))
-		connect.commit()
-		return get_success_response(f"Signature added successfully for leave_id {leave_id}")
-	except Exception as E:
-		return get_error_response(E)
+    try:
+        if (not session.get('user_info') or not check_user(session.get('user_info')['email'])):
+            return get_error_response("Forbidden")
+        
+        leave_id = request.json['leave_id']
+        signature = request.json['signature']
+        signature_binary = bytes(signature.values())
+        user = get_user_dic(session['user_info']['email'])
+        
+        db.reconnect()
+        connect = db
+        cursor = connect.cursor()
+        
+        # Check user's position
+        position = user.get("position", "")
+        if position in ["ar", "dr", "supdt"]:
+            # Set ar_dr_supdt_sig column
+            cursor.execute(
+                "UPDATE leaves SET ar_dr_supdt_sig = %s WHERE leave_id = %s", 
+                (signature_binary, leave_id ))
+        elif position in ["registrar"]:
+            cursor.execute(
+                "UPDATE leaves SET registrar_sig = %s WHERE leave_id = %s", 
+                (signature_binary, leave_id ))
+        else:
+            cursor.execute(
+                "UPDATE leaves SET office_sig= %s WHERE leave_id = %s", 
+                (signature_binary, leave_id ))
+        # Update user's signature
+        # cursor.execute(
+        #     "UPDATE users SET signature = %s WHERE user_id = %s", 
+        #     (signature_binary, user["user_id"]))
+        
+        connect.commit()
+        return get_success_response(f"Signature added successfully for leave_id {leave_id}")
+    except Exception as E:
+        print(E)
+        return get_error_response(E)
+
+
+# @app.route('/submit_office_signature', methods=['POST'])
+# @cross_origin(supports_credentials=True)
+# def submit_office_signature():
+# 	try:
+# 		if (not session.get('user_info') or not check_user(session.get('user_info')['email'])):
+# 			return get_error_response("Forbidden")
+# 		leave_id = request.json['leave_id']
+# 		signature = request.json['signature']
+# 		signature_binary = bytes(signature.values())
+# 		user = get_user_dic(session['user_info']['email'])
+# 		db.reconnect()
+# 		connect = db
+# 		cursor = connect.cursor()
+# 		cursor.execute(
+# 				"UPDATE leaves SET office_sig= %s WHERE leave_id = %s", (signature_binary, leave_id ))
+# 		cursor.execute("UPDATE users SET signature = %s WHERE user_id = %s", (signature_binary, user["user_id"]))
+# 		connect.commit()
+# 		return get_success_response(f"Signature added successfully for leave_id {leave_id}")
+# 	except Exception as E:
+# 		return get_error_response(E)
 
 @app.route('/disapprove_leave', methods=['POST'])
 @cross_origin(supports_credentials=True)
