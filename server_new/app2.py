@@ -40,8 +40,8 @@ app.config.update(SESSION_COOKIE_SAMESITE="None", SESSION_COOKIE_SECURE=True)
 db = mysql.connector.connect(
 	host="localhost",
 	user="root",
-	passwd="mysql123",
-	database="trail"
+	passwd="MyNewPass",
+	database="leavem"
 )
 
 success_code = Response(status=200)
@@ -1251,6 +1251,8 @@ def approve_non_casual_leave(cursor, leave_id,user, applicant, signature_binary,
 def approve_pg_leave(cursor,temp, leave_id,user, applicant, signature_binary, nature, duration,int_status,should_approve):
 	by = f'Approved By {temp}'
 	print(int_status)
+	if by in int_status:
+		return int_status  # If already approved, return the existing int_status
 	if int_status:
 		int_status += f"|{by}"
 	else:
@@ -1416,88 +1418,175 @@ def submit_office_signature():
 # 	except Exception as E:
 # 		return get_error_response(E)
 
+# @app.route('/disapprove_leave', methods=['POST'])
+# @cross_origin(supports_credentials=True)
+# def disapprove_leave():
+# 	try:
+# 		if (not session.get('user_info') or not check_user(session.get('user_info')['email'])):
+# 			return get_error_response("Forbidden")
+# 		leave_id = request.json['leave_id']
+# 		applicant_id = request.json['applicant_id']
+# 		user = get_user_dic(session['user_info']['email'])
+# 		db.reconnect()
+# 		connect = db
+# 		cursor = connect.cursor()
+# 		if leave_id.startswith("LMP"):
+# 			cursor.execute("SELECT nature, status, user_id, duration, type_of_leave from leaves WHERE leave_id = %s", (leave_id, ))
+# 			results = cursor.fetchall()[0]
+# 			curr_nature_of_leave = results[0]
+# 			curr_status_of_leave = results[1]
+# 			curr_type_of_leave = results[4]
+# 			curr_user_id = results[2]
+# 			curr_leave_duration = results[3]
+# 			applicant = get_user_dic_by_user_id(applicant_id)
+# 			if user["position"] == "hod":
+# 				by = f'Disapproved By Hod-{user["name"]}'
+# 				cursor.execute(
+# 					"UPDATE leaves SET status = %s WHERE leave_id = %s", (by, leave_id ))
+# 				connect.commit()
+# 			elif user["position"] == "dean":
+# 				by = f'Disapproved By Dean-{user["name"]}'
+# 				cursor.execute(
+# 					"UPDATE leaves SET status = %s WHERE leave_id = %s", (by, leave_id ))
+# 				connect.commit()
+# 			else:
+# 				return get_error_response("Leave Status Not Updated")
+# 			cols = ["Leave ID", "Status"]
+# 			vals = [leave_id, by]
+# 			message = util.leave_status_message(cols, vals)
+# 			util.send_email(applicant['email'], message, "Leave Status Updated")
+
+# 			if curr_nature_of_leave.lower().startswith("casual") and curr_status_of_leave.lower().startswith("approved"):
+# 				u_st2 = util.leaves_data_map[curr_type_of_leave]
+# 				query = "Update leaves_data set %s = %s-%s where user_id = %s" % (u_st2,u_st2,curr_leave_duration, curr_user_id)
+# 				cursor.execute(query)
+# 				connect.commit()
+# 			if curr_nature_of_leave.lower().startswith("non casual") and curr_status_of_leave.lower().count("approved") == 2:
+# 				u_st2 = util.leaves_data_map["non_casual_leave"]
+# 				query = "Update leaves_data set %s = %s-%s where user_id = %s" % (u_st2,u_st2,curr_leave_duration, curr_user_id)
+# 				cursor.execute(query)
+# 				connect.commit()
+# 			connect.close()
+# 			return get_success_response(f"Leave with ID: {leave_id} is disapproved")
+# 		else:
+# 			cursor.execute("SELECT nature, status, user_id, duration, int_status from pg_leaves WHERE leave_id = %s", (leave_id, ))
+# 			results = cursor.fetchall()[0]
+# 			curr_nature_of_leave = results[0]
+# 			curr_status_of_leave = results[1]
+# 			curr_user_id = results[2]
+# 			curr_leave_duration = results[3]
+# 			curr_int_status = results[4]
+# 			applicant = get_user_dic_by_user_id(applicant_id)
+# 			by = f'Disapproved By {user["name"]}'
+# 			if curr_int_status:
+# 				curr_int_status += f"|{by}"
+# 			else:
+# 				curr_int_status = by
+# 			cursor.execute(
+# 					"UPDATE pg_leaves SET status = %s, int_status=%s WHERE leave_id = %s", (by,curr_int_status, leave_id ))
+# 			cols = ["Leave ID", "Status"]
+# 			vals = [leave_id, by]
+# 			message = util.leave_status_message(cols, vals)
+# 			util.send_email(applicant['email'], message, "Leave Status Updated")
+# 			if curr_status_of_leave.lower().startswith("approved"):
+# 				u_st2 = util.leaves_data_map["PG"]
+# 				query = "Update leaves_data set %s = %s-%s where user_id = %s" % (u_st2,u_st2,curr_leave_duration, curr_user_id)
+# 				cursor.execute(query)
+# 			connect.commit()
+# 			connect.close()
+# 			return get_success_response(f"Leave with ID: {leave_id} is disapproved")
+
+# 	except Exception as E:
+# 		exc_type, exc_obj, exc_tb = sys.exc_info()
+# 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+# 		return get_error_response(f"{E} {exc_tb.tb_lineno}")
+
 @app.route('/disapprove_leave', methods=['POST'])
 @cross_origin(supports_credentials=True)
 def disapprove_leave():
-	try:
-		if (not session.get('user_info') or not check_user(session.get('user_info')['email'])):
-			return get_error_response("Forbidden")
-		leave_id = request.json['leave_id']
-		applicant_id = request.json['applicant_id']
-		user = get_user_dic(session['user_info']['email'])
-		db.reconnect()
-		connect = db
-		cursor = connect.cursor()
-		if leave_id.startswith("LMP"):
-			cursor.execute("SELECT nature, status, user_id, duration, type_of_leave from leaves WHERE leave_id = %s", (leave_id, ))
-			results = cursor.fetchall()[0]
-			curr_nature_of_leave = results[0]
-			curr_status_of_leave = results[1]
-			curr_type_of_leave = results[4]
-			curr_user_id = results[2]
-			curr_leave_duration = results[3]
-			applicant = get_user_dic_by_user_id(applicant_id)
-			if user["position"] == "hod":
-				by = f'Disapproved By Hod-{user["name"]}'
-				cursor.execute(
-					"UPDATE leaves SET status = %s WHERE leave_id = %s", (by, leave_id ))
-				connect.commit()
-			elif user["position"] == "dean":
-				by = f'Disapproved By Dean-{user["name"]}'
-				cursor.execute(
-					"UPDATE leaves SET status = %s WHERE leave_id = %s", (by, leave_id ))
-				connect.commit()
-			else:
-				return get_error_response("Leave Status Not Updated")
-			cols = ["Leave ID", "Status"]
-			vals = [leave_id, by]
-			message = util.leave_status_message(cols, vals)
-			util.send_email(applicant['email'], message, "Leave Status Updated")
+    try:
+        if (not session.get('user_info') or not check_user(session.get('user_info')['email'])):
+            return get_error_response("Forbidden")
+        leave_id = request.json['leave_id']
+        applicant_id = request.json['applicant_id']
+        user = get_user_dic(session['user_info']['email'])
+        db.reconnect()
+        connect = db
+        cursor = connect.cursor()
+        if leave_id.startswith("LMP"):
+            cursor.execute("SELECT nature, status, user_id, duration, type_of_leave from leaves WHERE leave_id = %s", (leave_id,))
+            results = cursor.fetchall()[0]
+            curr_nature_of_leave = results[0]
+            curr_status_of_leave = results[1]
+            curr_type_of_leave = results[4]
+            curr_user_id = results[2]
+            curr_leave_duration = results[3]
+            applicant = get_user_dic_by_user_id(applicant_id)
+            if user["position"] == "hod":
+                by = f'Disapproved By Hod-{user["name"]}'
+                cursor.execute(
+                    "UPDATE leaves SET status = %s WHERE leave_id = %s", ('Pending', leave_id))
+                connect.commit()
+            elif user["position"] == "dean":
+                by = f'Disapproved By Dean-{user["name"]}'
+                cursor.execute(
+                    "UPDATE leaves SET status = %s WHERE leave_id = %s", ('Pending', leave_id))
+                connect.commit()
+            else:
+                return get_error_response("Leave Status Not Updated")
+            cols = ["Leave ID", "Status"]
+            vals = [leave_id, 'Pending']
+            message = util.leave_status_message(cols, vals)
+            util.send_email(applicant['email'], message, "Leave Status Updated")
 
-			if curr_nature_of_leave.lower().startswith("casual") and curr_status_of_leave.lower().startswith("approved"):
-				u_st2 = util.leaves_data_map[curr_type_of_leave]
-				query = "Update leaves_data set %s = %s-%s where user_id = %s" % (u_st2,u_st2,curr_leave_duration, curr_user_id)
-				cursor.execute(query)
-				connect.commit()
-			if curr_nature_of_leave.lower().startswith("non casual") and curr_status_of_leave.lower().count("approved") == 2:
-				u_st2 = util.leaves_data_map["non_casual_leave"]
-				query = "Update leaves_data set %s = %s-%s where user_id = %s" % (u_st2,u_st2,curr_leave_duration, curr_user_id)
-				cursor.execute(query)
-				connect.commit()
-			connect.close()
-			return get_success_response(f"Leave with ID: {leave_id} is disapproved")
-		else:
-			cursor.execute("SELECT nature, status, user_id, duration, int_status from pg_leaves WHERE leave_id = %s", (leave_id, ))
-			results = cursor.fetchall()[0]
-			curr_nature_of_leave = results[0]
-			curr_status_of_leave = results[1]
-			curr_user_id = results[2]
-			curr_leave_duration = results[3]
-			curr_int_status = results[4]
-			applicant = get_user_dic_by_user_id(applicant_id)
-			by = f'Disapproved By {user["name"]}'
-			if curr_int_status:
-				curr_int_status += f"|{by}"
-			else:
-				curr_int_status = by
-			cursor.execute(
-					"UPDATE pg_leaves SET status = %s, int_status=%s WHERE leave_id = %s", (by,curr_int_status, leave_id ))
-			cols = ["Leave ID", "Status"]
-			vals = [leave_id, by]
-			message = util.leave_status_message(cols, vals)
-			util.send_email(applicant['email'], message, "Leave Status Updated")
-			if curr_status_of_leave.lower().startswith("approved"):
-				u_st2 = util.leaves_data_map["PG"]
-				query = "Update leaves_data set %s = %s-%s where user_id = %s" % (u_st2,u_st2,curr_leave_duration, curr_user_id)
-				cursor.execute(query)
-			connect.commit()
-			connect.close()
-			return get_success_response(f"Leave with ID: {leave_id} is disapproved")
+            if curr_nature_of_leave.lower().startswith("casual") and curr_status_of_leave.lower().startswith("approved"):
+                u_st2 = util.leaves_data_map[curr_type_of_leave]
+                query = "Update leaves_data set %s = %s-%s where user_id = %s" % (
+                    u_st2, u_st2, curr_leave_duration, curr_user_id)
+                cursor.execute(query)
+                connect.commit()
+            if curr_nature_of_leave.lower().startswith("non casual") and curr_status_of_leave.lower().count("approved") == 2:
+                u_st2 = util.leaves_data_map["non_casual_leave"]
+                query = "Update leaves_data set %s = %s-%s where user_id = %s" % (
+                    u_st2, u_st2, curr_leave_duration, curr_user_id)
+                cursor.execute(query)
+                connect.commit()
+            connect.close()
+            return get_success_response(f"Leave with ID: {leave_id} is disapproved and set to Pending")
+        else:
+            cursor.execute("SELECT nature, status, user_id, duration, int_status from pg_leaves WHERE leave_id = %s", (leave_id,))
+            results = cursor.fetchall()[0]
+            curr_nature_of_leave = results[0]
+            curr_status_of_leave = results[1]
+            curr_user_id = results[2]
+            curr_leave_duration = results[3]
+            curr_int_status = results[4]
+            applicant = get_user_dic_by_user_id(applicant_id)
+            by = f'Disapproved By {user["name"]}'
+            if curr_int_status:
+                curr_int_status += f"|{by}"
+            else:
+                curr_int_status = by
+            cursor.execute(
+                "UPDATE pg_leaves SET status = %s, int_status=%s WHERE leave_id = %s", ('Pending', curr_int_status, leave_id))
+            cols = ["Leave ID", "Status"]
+            vals = [leave_id, 'Pending']
+            message = util.leave_status_message(cols, vals)
+            util.send_email(applicant['email'], message, "Leave Status Updated")
+            if curr_status_of_leave.lower().startswith("approved"):
+                u_st2 = util.leaves_data_map["PG"]
+                query = "Update leaves_data set %s = %s-%s where user_id = %s" % (
+                    u_st2, u_st2, curr_leave_duration, curr_user_id)
+                cursor.execute(query)
+            connect.commit()
+            connect.close()
+            return get_success_response(f"Leave with ID: {leave_id} is disapproved and set to Pending")
 
-	except Exception as E:
-		exc_type, exc_obj, exc_tb = sys.exc_info()
-		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-		return get_error_response(f"{E} {exc_tb.tb_lineno}")
+    except Exception as E:
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        return get_error_response(f"{E} {exc_tb.tb_lineno}")
+
 
 @app.route('/add_comment', methods=['POST'])
 def add_comment():
