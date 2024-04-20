@@ -40,8 +40,8 @@ app.config.update(SESSION_COOKIE_SAMESITE="None", SESSION_COOKIE_SECURE=True)
 db = mysql.connector.connect(
 	host="localhost",
 	user="root",
-	passwd="MyNewPass",
-	database="leavem"
+	passwd="mysql123",
+	database="trail"
 )
 
 success_code = Response(status=200)
@@ -253,7 +253,7 @@ def get_new_leave_id(cursor):
 # 	print(last_id)
 # 	return f"PG_{last_id+1}"
 
-def get_new_pg_leave_id(cursor):
+def  get_new_pg_leave_id(cursor):
     cursor.execute("SELECT MAX(CAST(SUBSTRING_INDEX(leave_id, '_', -1) AS UNSIGNED)) FROM pg_leaves")
     result = cursor.fetchone()[0]
     if result is not None:
@@ -400,64 +400,287 @@ def check_pg_leave_balance(cursor, user_id, duration):
         # Handle exceptions here, either log or raise as appropriate.
         print("exception getting balance:", e)
         return False
+# def insert_pg_leave(leave, signature, document):
+# 	try:
+# 		db.reconnect()
+# 		connect = db
+# 		cursor = connect.cursor()
+# 		data = get_user_dic(leave['form_email'])
+# 		user_id = data['user_id']
+# 		department = data['department']
+# 		position = data['position']
+# 		if signature:
+# 			signature_binary = bytes(signature.values())
+# 		else:
+# 			signature_binary = signature
+# 		if leave.get('form_filename'):
+# 			file_name = leave['form_filename']
+# 			document.save(os.path.join(document_directory, file_name))
+# 		else:
+# 			file_name = ''
+# 		if leave.get('form_filedata'):
+# 			file_data = leave['form_filedata']
+# 		else:
+# 			file_data = ''
+
+# 		# Check leave balance before inserting the leave
+# 		sufficient_balance = check_pg_leave_balance(cursor, user_id, leave['form_duration'])
+# 		if not sufficient_balance:
+# 			return "Insufficient leave balance", None
+# 		cursor.execute("UPDATE users SET signature = %s WHERE user_id = %s", (signature_binary, user_id ))
+# 		new_leave_id = get_new_pg_leave_id(cursor) 
+
+# 		cursor.execute("INSERT INTO pg_leaves\
+# 			(leave_id, department, user_id, nature, purpose, is_station, request_date, start_date, end_date, duration, status, level, filename, signature, address, venue, duty_start_date,duty_end_date,prefix_suffix,station_start_date, station_end_date, advisor, ta_instructor, remarks) \
+# 			VALUES (%s,%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+# 					(new_leave_id,department, user_id, leave['form_nature'], leave['form_purpose'], leave['form_isStation'], leave['form_rdate'], leave['form_sdate'], leave['form_edate'], leave['form_duration'], 'Pending', position, file_name,signature_binary
+# 					,leave.get('form_address'), leave.get('form_venue'), leave.get('form_duty_start'), leave.get('form_duty_end'), leave.get('form_prefix_suffix'), leave.get('form_station_sdate'), leave.get('form_station_edate'),leave['form_advisor'],leave['form_ta_instructor'],leave['form_remarks']))
+# 		connect.commit()
+# 		cols = ["Applicant Email ID", "Leave ID"]
+# 		vals = [leave['form_email'],new_leave_id]
+# 		# 		leave applied now send email
+# 		for key in util.apply_pg_leave_keys:
+# 			if leave.get(key) and len(leave.get(key)):
+# 				cols.append(util.apply_pg_leave_keys[key])
+# 				vals.append(leave.get(key))
+# 		message = util.apply_leave_message(cols, vals)
+# 		util.send_email(leave['form_email'], message, "Leave Applied Successfully")
+# 		url = f"pg_applications/{new_leave_id}"
+# 		message = util.process_leave_message( cols, vals, url)
+# 		email_ids = set({leave['form_advisor'], leave['form_ta_instructor']})
+# 		for email in email_ids:
+# 			try:
+# 				util.send_email(email, message, "New Leave Application Submitted")
+# 			except:
+# 				pass
+# 		return True, new_leave_id
+# 	except Exception as E:
+# 		exc_type, exc_obj, exc_tb = sys.exc_info()
+# 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+# 		return str(E) + str(exc_tb.tb_lineno)
+
+
 def insert_pg_leave(leave, signature, document):
-	try:
-		db.reconnect()
-		connect = db
-		cursor = connect.cursor()
-		data = get_user_dic(leave['form_email'])
-		user_id = data['user_id']
-		department = data['department']
-		position = data['position']
-		if signature:
-			signature_binary = bytes(signature.values())
-		else:
-			signature_binary = signature
-		if leave.get('form_filename'):
-			file_name = leave['form_filename']
-			document.save(os.path.join(document_directory, file_name))
-		else:
-			file_name = ''
-		if leave.get('form_filedata'):
-			file_data = leave['form_filedata']
-		else:
-			file_data = ''
+    try:
+        db.reconnect()
+        connect = db
+        cursor = connect.cursor()
+        data = get_user_dic(leave['form_email'])
+        user_id = data['user_id']
+        department = data['department']
+        position = data['position']
+        if signature:
+            signature_binary = bytes(signature.values())
+        else:
+            signature_binary = signature
+        if leave.get('form_filename'):
+            file_name = leave['form_filename']
+            document.save(os.path.join(document_directory, file_name))
+        else:
+            file_name = ''
+        if leave.get('form_filedata'):
+            file_data = leave['form_filedata']
+        else:
+            file_data = ''
 
-		# Check leave balance before inserting the leave
-		sufficient_balance = check_pg_leave_balance(cursor, user_id, leave['form_duration'])
-		if not sufficient_balance:
-			return "Insufficient leave balance", None
-		cursor.execute("UPDATE users SET signature = %s WHERE user_id = %s", (signature_binary, user_id ))
-		new_leave_id = get_new_pg_leave_id(cursor) 
+        # Check leave balance before inserting the leave
+        sufficient_balance = check_pg_leave_balance(cursor, user_id, leave['form_duration'])
+        if not sufficient_balance:
+            return "Insufficient leave balance", None
 
-		cursor.execute("INSERT INTO pg_leaves\
-			(leave_id, department, user_id, nature, purpose, is_station, request_date, start_date, end_date, duration, status, level, filename, signature, address, venue, duty_start_date,duty_end_date,prefix_suffix,station_start_date, station_end_date, advisor, ta_instructor, remarks) \
-			VALUES (%s,%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
-					(new_leave_id,department, user_id, leave['form_nature'], leave['form_purpose'], leave['form_isStation'], leave['form_rdate'], leave['form_sdate'], leave['form_edate'], leave['form_duration'], 'Pending', position, file_name,signature_binary
-					,leave.get('form_address'), leave.get('form_venue'), leave.get('form_duty_start'), leave.get('form_duty_end'), leave.get('form_prefix_suffix'), leave.get('form_station_sdate'), leave.get('form_station_edate'),leave['form_advisor'],leave['form_ta_instructor'],leave['form_remarks']))
-		connect.commit()
-		cols = ["Applicant Email ID", "Leave ID"]
-		vals = [leave['form_email'],new_leave_id]
-		# 		leave applied now send email
-		for key in util.apply_pg_leave_keys:
-			if leave.get(key) and len(leave.get(key)):
-				cols.append(util.apply_pg_leave_keys[key])
-				vals.append(leave.get(key))
-		message = util.apply_leave_message(cols, vals)
-		util.send_email(leave['form_email'], message, "Leave Applied Successfully")
-		url = f"pg_applications/{new_leave_id}"
-		message = util.process_leave_message( cols, vals, url)
-		email_ids = set({leave['form_advisor'], leave['form_ta_instructor']})
-		for email in email_ids:
-			try:
-				util.send_email(email, message, "New Leave Application Submitted")
-			except:
-				pass
-		return True, new_leave_id
-	except Exception as E:
-		exc_type, exc_obj, exc_tb = sys.exc_info()
-		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-		return str(E) + str(exc_tb.tb_lineno)
+        # Check if the leave with the given ID already exists
+        cursor.execute("SELECT leave_id FROM pg_leaves WHERE leave_id = %s", (leave['leave_id'],))
+        existing_leave = cursor.fetchone()
+
+        if existing_leave:  # If leave with ID exists, update it
+            cursor.execute("""
+                UPDATE pg_leaves SET department = %s, user_id = %s, nature = %s, purpose = %s, is_station = %s,
+                request_date = %s, start_date = %s, end_date = %s, duration = %s, status = %s, level = %s, filename = %s,
+                signature = %s, address = %s, venue = %s, duty_start_date = %s, duty_end_date = %s, prefix_suffix = %s,
+                station_start_date = %s, station_end_date = %s, advisor = %s, ta_instructor = %s, remarks = %s
+                WHERE leave_id = %s
+            """, (
+                department, user_id, leave['form_nature'], leave['form_purpose'], leave['form_isStation'],
+                leave['form_rdate'], leave['form_sdate'], leave['form_edate'], leave['form_duration'], 'Pending',
+                position, file_name, signature_binary, leave.get('form_address'), leave.get('form_venue'),
+                leave.get('form_duty_start'), leave.get('form_duty_end'), leave.get('form_prefix_suffix'),
+                leave.get('form_station_sdate'), leave.get('form_station_edate'), leave['form_advisor'],
+                leave['form_ta_instructor'], leave['form_remarks'], leave['leave_id']
+            ))
+            connect.commit()
+            return True, leave['leave_id']
+        else:  # Otherwise, insert a new leave
+            cursor.execute("""
+                INSERT INTO pg_leaves (leave_id, department, user_id, nature, purpose, is_station, request_date,
+                start_date, end_date, duration, status, level, filename, signature, address, venue, duty_start_date,
+                duty_end_date, prefix_suffix, station_start_date, station_end_date, advisor, ta_instructor, remarks)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                leave['leave_id'], department, user_id, leave['form_nature'], leave['form_purpose'],
+                leave['form_isStation'], leave['form_rdate'], leave['form_sdate'], leave['form_edate'],
+                leave['form_duration'], 'Pending', position, file_name, signature_binary, leave.get('form_address'),
+                leave.get('form_venue'), leave.get('form_duty_start'), leave.get('form_duty_end'),
+                leave.get('form_prefix_suffix'), leave.get('form_station_sdate'), leave.get('form_station_edate'),
+                leave['form_advisor'], leave['form_ta_instructor'], leave['form_remarks']
+            ))
+            connect.commit()
+            return True, leave['leave_id']
+
+    except Exception as E:
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        return str(E) + str(exc_tb.tb_lineno), None
+
+
+def insert_edited_pg_leave(leave, signature, document):
+    try:
+        db.reconnect()
+        connect = db
+        cursor = connect.cursor()
+        data = get_user_dic(leave['form_email'])
+        user_id = data['user_id']
+        department = data['department']
+        position = data['position']
+        if signature:
+            signature_binary = bytes(signature.values())
+        else:
+            signature_binary = signature
+        if leave.get('form_filename'):
+            file_name = leave['form_filename']
+            document.save(os.path.join(document_directory, file_name))
+        else:
+            file_name = ''
+        if leave.get('form_filedata'):
+            file_data = leave['form_filedata']
+        else:
+            file_data = ''
+
+        # Check leave balance before inserting the leave
+        sufficient_balance = check_pg_leave_balance(cursor, user_id, leave['duration'])
+        if not sufficient_balance:
+            return "Insufficient leave balance", None
+        cursor.execute("UPDATE users SET signature = %s WHERE user_id = %s", (signature_binary, user_id ))
+        # Get the leave ID you want to update
+        leave_id = leave['leave_id']
+        cursor.execute("UPDATE pg_leaves SET \
+            department = %s, nature = %s, purpose = %s, is_station = %s, request_date = %s, start_date = %s, end_date = %s, duration = %s, \
+            status = %s, level = %s, filename = %s, signature = %s, address = %s, venue = %s, duty_start_date = %s, duty_end_date = %s, \
+            prefix_suffix = %s, station_start_date = %s, station_end_date = %s, advisor = %s, ta_instructor = %s, remarks = %s \
+            WHERE leave_id = %s",
+            (department, leave['nature'], leave['purpose'], leave['is_station'], leave['form_rdate'], leave['start_date'], leave['end_date'], 
+            leave['duration'], 'Pending', position, file_name, signature_binary, leave.get('address'), leave.get('venue'), 
+            leave.get('duty_start_date'), leave.get('duty_end_date'), leave.get('prefix_suffix'), leave.get('station_start_date'), 
+            leave.get('station_end_date'), leave['form_advisor'], leave['form_ta_instructor'], leave['remarks'], leave_id))
+
+        connect.commit()
+        cols = ["Applicant Email ID", "Leave ID"]
+        vals = [leave['form_email'], leave_id]
+        # Leave applied now send email
+        for key in util.apply_pg_leave_keys:
+            if leave.get(key) and len(leave.get(key)):
+                cols.append(util.apply_pg_leave_keys[key])
+                vals.append(leave.get(key))
+        message = util.apply_leave_message(cols, vals)
+        util.send_email(leave['form_email'], message, "Leave Applied Successfully")
+        url = f"pg_applications/{leave_id}"
+        message = util.process_leave_message( cols, vals, url)
+        email_ids = set({leave['form_advisor'], leave['form_ta_instructor']})
+        for email in email_ids:
+            try:
+                util.send_email(email, message, "Leave Application Updated")
+            except:
+                pass
+        return True, leave_id
+    except Exception as E:
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        return str(E) + str(exc_tb.tb_lineno),
+
+def insert_edited_leave(leave, signature, document):
+    try:
+        db.reconnect()
+        connect = db
+        cursor = connect.cursor()
+        data = get_user_dic(leave['form_email'])
+        user_id = data['user_id']
+        department = data['department']
+        position = data['position']
+
+        sufficient_balance = check_leave_balance(cursor, user_id, leave['nature'], leave['type_of_leave'], leave['duration'])
+        if not sufficient_balance:
+            return "Insufficient leave balance", None
+
+        if signature:
+            signature_binary = bytes(signature.values())
+        else:
+            signature_binary = signature
+
+        if leave.get('form_filename'):
+            file_name = leave['form_filename']
+            document.save(os.path.join(document_directory, file_name))
+        else:
+            file_name = ''
+
+        if leave.get('form_filedata'):
+            file_data = leave['form_filedata']
+        else:
+            file_data = ''
+
+        cursor.execute("UPDATE users SET signature = %s WHERE user_id = %s", (signature_binary, user_id ))
+
+        leave_id = leave['leave_id']  # Get the leave ID you want to update
+
+        cursor.execute("UPDATE leaves SET \
+            department = %s, nature = %s, purpose = %s, is_station = %s, request_date = %s, start_date = %s, end_date = %s, duration = %s, \
+            status = %s, level = %s, filename = %s, file_data = %s, signature = %s, address = %s, prefix_start_date = %s, prefix_end_date = %s, \
+            suffix_start_date = %s, suffix_end_date = %s, alt_arrangements = %s, station_start_date = %s, station_end_date = %s \
+            WHERE leave_id = %s",
+            (department, leave['nature'], leave['purpose'], leave['is_station'], leave['form_rdate'], leave['start_date'], leave['end_date'], 
+            leave['duration'], 'Pending', position, file_name, file_data, signature_binary, leave.get('address'), leave.get('prefix_start_date'), 
+            leave.get('prefix_end_date'), leave.get('suffix_start_date'), leave.get('suffix_end_date'), leave.get('alt_arrangements'), leave.get('station_start_date'), 
+            leave.get('station_end_date'), leave_id))
+
+        connect.commit()
+
+        cols = ["Applicant Email ID", "Leave ID"]
+        vals = [leave['form_email'], leave_id]
+
+        for key in util.apply_leave_keys:
+            if leave.get(key) and len(leave.get(key)):
+                cols.append(util.apply_leave_keys[key])
+                vals.append(leave.get(key))
+
+        message = util.apply_leave_message(cols, vals)
+        util.send_email(leave['form_email'], message, "Leave Applied Successfully")
+
+        if leave['nature'].lower().startswith("casual"):
+            url = f"casual/{leave_id}"
+        else:
+            url = f"non_casual/{leave_id}"
+
+        message = util.process_leave_message(cols, vals, url)
+
+        if position == "hod":
+            cursor.execute("SELECT email_id FROM users WHERE position = 'dean'")
+            data = cursor.fetchall()
+            if data:
+                recepient_email = data[0][0]
+                util.send_email(recepient_email, message, "New Leave Application Submitted")
+
+        if position == "faculty":
+            cursor.execute("SELECT email_id FROM users WHERE position = 'hod' AND department = %s", (department,))
+            data = cursor.fetchall()
+            if data:
+                for info in data:
+                    recepient_email = info[0]
+                    util.send_email(recepient_email, message, "New Leave Application Submitted")
+
+        return True, leave_id
+
+    except Exception as E:
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        return "first" + str(E) + str(exc_tb.tb_lineno)
 
 def leaves_data_util(user_id):
 	connect = db
@@ -775,6 +998,31 @@ def apply_leave():
 		else:
 			ret = insert_pg_leave(data, signature,document)
 			print("tried inserting pg_leave")
+		if ret[0] == True:
+			return get_success_response(f"Leave Applied Successfully ID: {ret[1]}")
+		else:
+			print(ret)
+			return get_error_response(f"Leave Application Unsuccessful {ret}")
+	except Exception as E:
+		return get_error_response(f"Leave Application Unsuccessful {E}")
+
+@app.route('/edit_leave', methods=['POST'])
+@cross_origin(supports_credentials=True)
+def edit_leave():
+	try:
+		if (not session.get('user_info') or not check_user(session.get('user_info')['email'])):
+			return get_error_response("Forbidden")
+		data = json.loads(request.form.get('data'))
+		signature = data['signature']
+		# print("Signature : ", signature)
+		try:
+			document = request.files['file']
+		except:
+			document = None
+		if 'pg' not in session['user_info']['position']:
+			ret = insert_edited_leave(data, signature,document)
+		else:
+			ret = insert_edited_pg_leave(data, signature,document)
 		if ret[0] == True:
 			return get_success_response(f"Leave Applied Successfully ID: {ret[1]}")
 		else:

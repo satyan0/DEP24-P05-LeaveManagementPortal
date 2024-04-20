@@ -13,7 +13,8 @@ import { useNavigate } from "react-router-dom";
 import IITROPARLOGO from "../../img/logo.jpeg";
 
 const Nav = styled.div`
-  background: linear-gradient(135deg, #08328B, #265ACB);
+  // background: linear-gradient(135deg, #08328B, #265ACB);
+  // background: black;
   height: 60px;
   display: flex;
   justify-content: flex-start;
@@ -26,7 +27,7 @@ const TopNavbar = () => {
 
   return (
     <>
-      <Nav className="rounded-xl transition-all sticky mx-10 top-4 z-50 py-3 shadow-md shadow-blue-gray-500/5">
+      <Nav className="bg-gradient-to-br from-gray-700 to-gray-800 rounded-xl transition-all sticky mx-10 top-4 z-50 py-3 shadow-md shadow-blue-gray-500/5">
         <div
           className="flex justify-center gap-2"
           style={{ width: "400px", fontSize: "20px", color: "white" }}

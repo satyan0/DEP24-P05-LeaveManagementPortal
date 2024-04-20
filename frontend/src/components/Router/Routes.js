@@ -7,6 +7,8 @@ import PastApplications from "../Forms/PastApplications";
 import CheckLeaves from "../Forms/CheckLeaves";
 import Dates from "../Forms/Dates";
 import ApplyLeaveComponent from "../Forms/ApplyLeaveComponent";
+import PGEditApplication from "../Forms/PGEditApplication";
+import FacultyEditApplication from "../Forms/FacultyEditApplication"
 import UpdateLeave from "../Forms/OfficePortal";
 import LeavePDFModals from "../Forms/LeavePDFModals";
 import LeavePDFModalsNonCasual from "../Forms/LeavePDFModals2";
@@ -15,8 +17,10 @@ import { useAuth } from "../../contexts/AuthContext";
 import Sidebar from "../Sidebar/Sidebar";
 import TopNavbar from "../Sidebar/TopNavbar";
 
+
 const Paths = (props) => {
   const { currentUser } = useAuth();
+  
 
   return (
     <>
@@ -218,6 +222,47 @@ const Paths = (props) => {
             }
           ></Route>
         </Route>
+
+        <Route
+          path="/past_applications/editpg_application/:id"
+          element={
+            <PrivateRoute user={["admin", "pg"]} toast={props.toast} />
+          }
+        >
+          <Route
+            path="/past_applications/editpg_application/:id"
+            element={
+              <div className="flex-row min-h-screen bg-blue-gray-50/50">
+                <Sidebar />
+                <div className="p-4 xl:ml-80">
+                  <TopNavbar />
+                  <PGEditApplication toast={props.toast} />
+                </div>
+              </div>
+            }
+          />
+        </Route>
+
+        <Route
+          path="/past_applications/edit_leave/:id"
+          element={
+            <PrivateRoute user={["all"]} toast={props.toast} />
+          }
+        >
+          <Route
+            path="/past_applications/edit_leave/:id"
+            element={
+              <div className="flex-row min-h-screen bg-blue-gray-50/50">
+                <Sidebar />
+                <div className="p-4 xl:ml-80">
+                  <TopNavbar />
+                  <FacultyEditApplication toast={props.toast} />
+                </div>
+              </div>
+            }
+          />
+        </Route>
+
 
         <Route
           path="/navigate/dates"

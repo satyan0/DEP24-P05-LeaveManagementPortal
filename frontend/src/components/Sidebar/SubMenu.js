@@ -15,10 +15,13 @@ const SidebarLink = styled(Link)`
   height: 60px;
   text-decoration: none;
   font-size: 18px;
+  border-radius: 4px;
+  margin-top: 5px;
+  margin-bottom: 5px;
 
   &:hover {
     background: #bfcff5;
-    border-left: 4px solid #632ce4;
+    // border-left: 4px solid #632ce4;
     cursor: pointer;
   }
 `;
@@ -36,6 +39,9 @@ const DropdownLink = styled(Link)`
   text-decoration: none;
   color: #f5f5f5;
   font-size: 18px;
+  border-radius: 4px;
+  // margin-top: 5px;
+  // margin-bottom: 5px;
 
   &:hover {
     background: #89a6f0;

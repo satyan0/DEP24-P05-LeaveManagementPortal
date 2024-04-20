@@ -50,6 +50,7 @@ export default function PastApplications({ toast }) {
 				}				
 			}
 			setData(temp);
+			// console.log(temp);
 		} catch (error) {
 			setData([]);
 			// toast.error("something went wrong", toast.POSITION.BOTTOM_RIGHT);

@@ -81,7 +81,7 @@ export default function Dashboard({ toast }) {
         let status = temp_data[i].status;
         while (start_date <= end_date) {
           let currentDate = start_date.toISOString().slice(0, 10);
-          console.log(currentDate);
+          // console.log(currentDate);
           dic[currentDate] = status;
           start_date.setDate(start_date.getDate() + 1);
         }
