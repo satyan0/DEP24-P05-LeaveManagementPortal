@@ -78,3 +78,11 @@ CREATE TABLE leaves_data (
     taken_pg_leaves INT,
     PRIMARY KEY (user_id, year)
 );
+
+CREATE TABLE scheduled_jobs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) NOT NULL,
+    job_id VARCHAR(255) NOT NULL,
+    job_type VARCHAR(50) NOT NULL,
+    run_date DATETIME NOT NULL
+);

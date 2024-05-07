@@ -1,3 +1,4 @@
+import datetime
 from flask import Flask,send_file, request, session, Response, jsonify
 from flask_session import Session
 import mysql.connector
@@ -11,12 +12,18 @@ import sys
 from dateutil import parser
 import json
 import base64
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
+from apscheduler.jobstores.base import JobLookupError
 
 import util
 
 app = Flask(__name__)
 # Session(app)
 CORS(app, supports_credentials=True)
+
+
+
 
 app.secret_key='secret123'
 # SECRET_KEY='secret123'
@@ -25,7 +32,7 @@ app.secret_key='secret123'
 root_directory = ''
 document_directory = 'documents'
 
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 
 # this is final, don't change this please, in case of issue check network and see the warning in 
@@ -43,6 +50,13 @@ db = mysql.connector.connect(
 	passwd="MyNewPass",
 	database="leavem"
 )
+
+# Configure the APScheduler with SQLAlchemy job store
+job_store = SQLAlchemyJobStore(url='mysql+mysqlconnector://root:MyNewPass@localhost/leavem')
+
+# Create the scheduler with the job store
+scheduler = BackgroundScheduler(jobstores={'default': job_store})
+scheduler.start()
 
 success_code = Response(status=200)
 failure_code = Response(status=400)
@@ -208,6 +222,7 @@ def get_user_dic(email):
 	dic['entry_number'] = data[7]
 	dic['ta_instructor'] = data[8]
 	dic['advisor'] = data[9]
+	dic['temporary_role'] = data[10]
 	return dic
 
 def get_user_signature(email):
@@ -231,6 +246,7 @@ def get_user_dic_by_user_id(user_id):
 	dic['entry_number'] = data[7]
 	dic['ta_instructor'] = data[8]
 	dic['advisor'] = data[9]
+	dic['temporary_role'] = data[10]
 	return dic
 
 def get_new_leave_id(cursor):
@@ -1230,6 +1246,60 @@ def get_leave_info_by_id():
 		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 		return get_error_response(f"{E} {exc_tb.tb_lineno}")
 
+@app.route('/check_temporary_applications', methods=['GET', 'POST'])
+@cross_origin(supports_credentials=True)
+def check_temporary_applications():
+    try:
+        if not session.get('user_info') or not check_user(session.get('user_info')['email']):
+            return get_error_response("Forbidden")
+        
+        email = session['user_info']['email']
+        data = get_user_dic(email)
+        user_id = data['user_id']
+        department = data['department']
+        position = data['temporary_role']
+        db.reconnect()
+        connect = db
+        cursor = connect.cursor()
+        
+        if position == "hod" or data.get('temporary_role') == "hod":  # Check if user or temporary role is HOD
+            cursor.execute('SELECT * FROM leaves WHERE department = %s AND level = %s', (department, "faculty"))
+            leaves = cursor.fetchall()
+        else:
+            leaves = []  # Return an empty list for non-HODs
+        
+        payload = []
+        columns = get_columns_of_table('leaves')
+        for i in leaves:
+            content = {}
+            for col, val in zip(columns, i):
+                if col in ['file_data', 'signature'] or "_sig" in col:
+                    continue
+                content[col] = val
+            cursor.execute('SELECT email_id FROM users WHERE user_id = %s', (i[2], ))
+            data = cursor.fetchall()
+            email = data[0][0]
+            cur_user = get_user_dic(email)
+            content['email'] = cur_user['email']
+            content['name'] = cur_user['name']
+            content['position'] = cur_user['position']
+            content['entry_number'] = cur_user['entry_number']
+            payload.append(content)
+
+        sorted_leaves = sorted(payload, key=lambda k: k['leave_id'], reverse=True)
+        pending_leaves = []
+        other_leaves = []
+        for leave in sorted_leaves:
+            if leave['status'] == 'Pending':
+                pending_leaves.append(leave)
+            else:
+                other_leaves.append(leave)
+        
+        payload = pending_leaves + other_leaves  # Combine lists
+        
+        return get_success_response(payload)
+    except Exception as e:
+        return get_error_response(f"Error: {e}")
 @app.route('/check_applications', methods=['GET', 'POST'])
 @cross_origin(supports_credentials=True)
 def check_applications():
@@ -1428,7 +1498,7 @@ def disapprove_withdraw_leave():
 		return get_error_response(E)
 
 def approve_casual_leave(cursor, leave_id,user, applicant, signature_binary, nature, type_of_leave, duration):
-	if user["position"] == "hod":
+	if user["position"] == "hod" or user["temporary_role"] == "hod":
 		by = f'Approved By Hod-{user["name"]}'
 		cursor.execute(
 			"UPDATE leaves SET status = %s, hod_sig= %s WHERE leave_id = %s", (by,signature_binary, leave_id ))
@@ -1449,7 +1519,7 @@ def approve_casual_leave(cursor, leave_id,user, applicant, signature_binary, nat
 	return by
 
 def approve_non_casual_leave(cursor, leave_id,user, applicant, signature_binary, nature, type_of_leave, duration, curr_status):
-	if user["position"] == "hod":
+	if user["position"] == "hod" or user["temporary_role"] == "hod":
 		by = f'Approved By Hod-{user["name"]}'
 		new_status = ""
 		if curr_status == 'Pending':
@@ -1525,10 +1595,13 @@ def approve_leave():
 	try:
 		print('ikkada')
 		if (not session.get('user_info') or not check_user(session.get('user_info')['email'])):
+			print("11")
 			return get_error_response("Forbidden")
+		print("22")
 		leave_id = request.json['leave_id']
 		applicant_id = request.json['applicant_id']
 		signature = request.json['signature']
+		print("33")
 		try:
 			signature_binary = bytes(signature.values())
 		except:
@@ -1595,6 +1668,147 @@ def approve_leave():
 	except Exception as E:
 		return get_error_response(E)
 	
+
+def store_job_in_database(email, job_id, job_type, run_date):
+    cursor = db.cursor()
+    cursor.execute("INSERT INTO scheduled_jobs (email, job_id, job_type, run_date) VALUES (%s, %s, %s, %s)",
+                   (email, job_id, job_type, run_date))
+    db.commit()
+    cursor.close()
+
+def assign_temporary_hod(email):
+    # Assign temporary HOD role
+    db.reconnect()
+		
+    connect = db
+    cursor = connect.cursor()
+    cursor = db.cursor()
+    cursor.execute("UPDATE users SET email_id = 'hod' WHERE id = %s", (email,))
+    db.commit()
+    cursor.close()
+
+def revert_temporary_hod(email):
+    # Revert temporary HOD role
+    db.reconnect()
+		
+    connect = db
+    cursor = connect.cursor()
+    cursor.execute("UPDATE users SET email_id = NULL WHERE id = %s", (email,))
+    db.commit()
+    cursor.close()
+
+# Route for assigning temporary role and scheduling the revert job
+from uuid import uuid4  # Import uuid4 function to generate unique identifiers
+
+# Dictionary to store job IDs associated with each email
+scheduled_jobs = {}
+
+# Route for assigning temporary role and scheduling the revert job
+@app.route('/assign_temporary_role', methods=['POST'])
+def assign_temporary_role():
+    try:
+        data = request.json
+        email = data.get('email')
+        start_date_str = data.get('start_date')
+        end_date_str = data.get('end_date')
+
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+
+        cursor = db.cursor()
+        cursor.execute("SELECT email_id FROM users WHERE email_id = %s", (email,))
+        result = cursor.fetchone()
+
+        if result:
+            # Generate unique identifiers for the jobs
+            assign_job_id = str(uuid4())
+            revert_job_id = str(uuid4())
+
+            # Schedule job to assign temporary HOD role at start date
+            assign_job = scheduler.add_job(assign_temporary_hod, 'date', args=[email], run_date=start_date, id=assign_job_id)
+            revert_job = scheduler.add_job(revert_temporary_hod, 'date', args=[email], run_date=end_date, id=revert_job_id)
+
+            # Store job IDs associated with the email in the database
+            cursor.execute("INSERT INTO scheduled_jobs (email, assign_job_id, revert_job_id, start_date, end_date) VALUES (%s, %s, %s, %s, %s)",
+                           (email, assign_job_id, revert_job_id, start_date, end_date))
+            db.commit()
+
+            # Close the cursor after consuming all results
+            cursor.close()
+
+            return jsonify({'message': f"Temporary HOD status assigned to {email} from {start_date.date()} to {end_date.date()}."}), 200
+        else:
+            # Close the cursor if the user is not found
+            cursor.close()
+            return jsonify({'error': 'User not found.'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/cancel_temporary_role', methods=['POST'])
+def cancel_temporary_role():
+    try:
+        data = request.json
+        email = data.get('email')
+
+        cursor = db.cursor()
+        cursor.execute("SELECT assign_job_id, revert_job_id FROM scheduled_jobs WHERE email = %s", (email,))
+        results = cursor.fetchall()  # Fetch all rows
+
+        # Check if there are any results
+        if results:
+            for result in results:
+                assign_job_id, revert_job_id = result
+
+                # Attempt to remove the scheduled jobs
+                try:
+                    scheduler.remove_job(assign_job_id)
+                    scheduler.remove_job(revert_job_id)
+                except JobLookupError:
+                    pass
+
+            # Remove all scheduled jobs for the email from the database
+            cursor.execute("DELETE FROM scheduled_jobs WHERE email = %s", (email,))
+            db.commit()
+
+            # Close the cursor after consuming all results
+            cursor.close()
+
+            return jsonify({'message': f"Scheduled jobs for {email} canceled successfully."}), 200
+        else:
+            # Close the cursor if no scheduled jobs are found
+            cursor.close()
+            return jsonify({'error': f"No scheduled jobs found for {email}."}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+from flask import jsonify
+
+def remove_all_jobs():
+    try:
+        # Remove all jobs from the scheduler
+		
+        scheduler.remove_all_jobs()
+        print("done")
+
+        return True
+    except Exception as e:
+        print(f"Error removing all jobs: {e}")
+        return False
+
+
+@app.route('/all_scheduled_jobs', methods=['GET'])
+def all_scheduled_jobs():
+    try:
+        # Get a list of all scheduled jobs
+        all_jobs = scheduler.get_jobs()
+
+        # Extract relevant information from the jobs
+        job_info = [{'id': job.id, 'name': job.name, 'next_run_time': job.next_run_time} for job in all_jobs]
+
+        # Return the list of scheduled jobs as JSON
+        return jsonify({'jobs': job_info}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/submit_office_signature', methods=['POST'])
 @cross_origin(supports_credentials=True)
