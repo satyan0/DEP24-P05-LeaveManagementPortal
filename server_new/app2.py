@@ -40,8 +40,8 @@ app.config.update(SESSION_COOKIE_SAMESITE="None", SESSION_COOKIE_SECURE=True)
 db = mysql.connector.connect(
 	host="localhost",
 	user="root",
-	passwd="mysql123",
-	database="trail"
+	passwd="MyNewPass",
+	database="leavem"
 )
 
 success_code = Response(status=200)
@@ -68,7 +68,6 @@ def get_error_response(error):
 	}
 
 def get_success_response(data):
-	print("yo")
 	return {
 		"status": "success",
 		"data": data
@@ -215,7 +214,6 @@ def get_user_signature(email):
 	data = get_user_data(email)[0]
 	dic = {}
 	dic['signature'] = base64.b64encode(data[6]).decode('utf-8') if data[6] else None
-	print(dic['signature'])
 	return dic
 
 def get_user_dic_by_user_id(user_id):
@@ -355,12 +353,13 @@ def check_leave_balance(cursor, user_id, nature, type_of_leave, duration):
                 return False
             cursor.execute(f"SELECT {total_leaves_field}, {taken_leaves_field} FROM leaves_data WHERE user_id = %s", (user_id,))
         elif nature.lower().startswith("non casual"):
-            taken_leaves_field = util.leaves_data_map["taken_non_casual_leave"]
+            print("comes here")
+            taken_leaves_field = util.leaves_data_map["non_casual_leave"]
             cursor.execute(f"SELECT total_non_casual_leave, {taken_leaves_field} FROM leaves_data WHERE user_id = %s", (user_id,))
         else:
             print("Invalid nature of leave")
             return False
-        
+        print("comes here too")
         row = cursor.fetchone()
         
         if row:
@@ -482,54 +481,43 @@ def insert_pg_leave(leave, signature, document):
             file_data = leave['form_filedata']
         else:
             file_data = ''
-
+        
         # Check leave balance before inserting the leave
         sufficient_balance = check_pg_leave_balance(cursor, user_id, leave['form_duration'])
         if not sufficient_balance:
-            return "Insufficient leave balance", None
+            return False, "Insufficient leave balance"
+        
+        cursor.execute("UPDATE users SET signature = %s WHERE user_id = %s", (signature_binary, user_id))
+        new_leave_id = get_new_pg_leave_id(cursor) 
 
-        # Check if the leave with the given ID already exists
-        cursor.execute("SELECT leave_id FROM pg_leaves WHERE leave_id = %s", (leave['leave_id'],))
-        existing_leave = cursor.fetchone()
-
-        if existing_leave:  # If leave with ID exists, update it
-            cursor.execute("""
-                UPDATE pg_leaves SET department = %s, user_id = %s, nature = %s, purpose = %s, is_station = %s,
-                request_date = %s, start_date = %s, end_date = %s, duration = %s, status = %s, level = %s, filename = %s,
-                signature = %s, address = %s, venue = %s, duty_start_date = %s, duty_end_date = %s, prefix_suffix = %s,
-                station_start_date = %s, station_end_date = %s, advisor = %s, ta_instructor = %s, remarks = %s
-                WHERE leave_id = %s
-            """, (
-                department, user_id, leave['form_nature'], leave['form_purpose'], leave['form_isStation'],
-                leave['form_rdate'], leave['form_sdate'], leave['form_edate'], leave['form_duration'], 'Pending',
-                position, file_name, signature_binary, leave.get('form_address'), leave.get('form_venue'),
-                leave.get('form_duty_start'), leave.get('form_duty_end'), leave.get('form_prefix_suffix'),
-                leave.get('form_station_sdate'), leave.get('form_station_edate'), leave['form_advisor'],
-                leave['form_ta_instructor'], leave['form_remarks'], leave['leave_id']
-            ))
-            connect.commit()
-            return True, leave['leave_id']
-        else:  # Otherwise, insert a new leave
-            cursor.execute("""
-                INSERT INTO pg_leaves (leave_id, department, user_id, nature, purpose, is_station, request_date,
-                start_date, end_date, duration, status, level, filename, signature, address, venue, duty_start_date,
-                duty_end_date, prefix_suffix, station_start_date, station_end_date, advisor, ta_instructor, remarks)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, (
-                leave['leave_id'], department, user_id, leave['form_nature'], leave['form_purpose'],
-                leave['form_isStation'], leave['form_rdate'], leave['form_sdate'], leave['form_edate'],
-                leave['form_duration'], 'Pending', position, file_name, signature_binary, leave.get('form_address'),
-                leave.get('form_venue'), leave.get('form_duty_start'), leave.get('form_duty_end'),
-                leave.get('form_prefix_suffix'), leave.get('form_station_sdate'), leave.get('form_station_edate'),
-                leave['form_advisor'], leave['form_ta_instructor'], leave['form_remarks']
-            ))
-            connect.commit()
-            return True, leave['leave_id']
-
+        cursor.execute("INSERT INTO pg_leaves (leave_id, department, user_id, nature, purpose, is_station, request_date, start_date, end_date, duration, status, level, filename, signature, address, venue, duty_start_date,duty_end_date,prefix_suffix,station_start_date, station_end_date, advisor, ta_instructor, remarks) \
+            VALUES (%s,%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+            (new_leave_id, department, user_id, leave['form_nature'], leave['form_purpose'], leave['form_isStation'], leave['form_rdate'], leave['form_sdate'], leave['form_edate'], leave['form_duration'], 'Pending', position, file_name,signature_binary
+            ,leave.get('form_address'), leave.get('form_venue'), leave.get('form_duty_start'), leave.get('form_duty_end'), leave.get('form_prefix_suffix'), leave.get('form_station_sdate'), leave.get('form_station_edate'),leave['form_advisor'],leave['form_ta_instructor'],leave['form_remarks']))
+        
+        connect.commit()
+        cols = ["Applicant Email ID", "Leave ID"]
+        vals = [leave['form_email'],new_leave_id]
+        # Leave applied now send email
+        for key in util.apply_pg_leave_keys:
+            if leave.get(key) and len(leave.get(key)):
+                cols.append(util.apply_pg_leave_keys[key])
+                vals.append(leave.get(key))
+        message = util.apply_leave_message(cols, vals)
+        util.send_email(leave['form_email'], message, "Leave Applied Successfully")
+        url = f"pg_applications/{new_leave_id}"
+        message = util.process_leave_message(cols, vals, url)
+        email_ids = set({leave['form_advisor'], leave['form_ta_instructor']})
+        for email in email_ids:
+            try:
+                util.send_email(email, message, "New Leave Application Submitted")
+            except:
+                pass
+        return True, new_leave_id
     except Exception as E:
         exc_type, exc_obj, exc_tb = sys.exc_info()
         fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-        return str(E) + str(exc_tb.tb_lineno), None
+        return str(E) + str(exc_tb.tb_lineno)
 
 
 def insert_edited_pg_leave(leave, signature, document):
@@ -934,7 +922,7 @@ def logout():
 @cross_origin(supports_credentials=True)
 def get_user_info():
 	try:
-		print("getting_user_info")
+		# print("getting_user_info")
 		# print(session)
 		# print(session.get('user_info'))
 		# print(check_user(session.get('user_info')['email']))
@@ -1213,7 +1201,7 @@ def get_leave_info_by_id():
 				# 	# continue
 				# elif col in ['ta_sig', 'advisor_sig']:
 				# 	print("niggaaaaa")
-				elif col in ['signature', 'ta_sig','advisor_sig', 'hod_sig', 'dean_sig', 'office_sig', 'ar_dr_supdt_sig'] and val is not None:
+				elif col in ['signature', 'ta_sig','advisor_sig', 'hod_sig', 'dean_sig', 'office_sig', 'ar_dr_supdt_sig', 'registrar_sig'] and val is not None:
 					val = base64.b64encode(val).decode('utf-8')
 					# print('nigga')
 					# print("Encoded value of", col, ":", val)
@@ -1268,8 +1256,11 @@ def check_applications():
 			cursor.execute("SELECT * FROM leaves where department=%s", (department,))
 			leaves = cursor.fetchall()
 		elif position == 'registrar' or position == 'ar' or position == 'dr' or position == 'supdt':
-			cursor.execute("SELECT * FROM leaves")
+			print(position)
+			cursor.execute('SELECT * FROM leaves WHERE\
+				department = %s and level = %s', (department, "faculty"))
 			leaves = cursor.fetchall()
+			print("were here")
 
 		else:
 			leaves = []
@@ -1294,7 +1285,7 @@ def check_applications():
 			payload.append(content)
 
 		# now process pg leaves
-		if position not in ['office', 'registrar', 'ar', 'dr', 'supdt']:
+		if position not in ['office']:
 			cursor.execute('SELECT * FROM pg_leaves WHERE advisor = %s or ta_instructor = %s', (session['user_info']['email'], session['user_info']['email']))
 		else:
 			cursor.execute('SELECT * FROM pg_leaves WHERE department =%s', (department, ))
@@ -1499,8 +1490,8 @@ def approve_non_casual_leave(cursor, leave_id,user, applicant, signature_binary,
 def approve_pg_leave(cursor,temp, leave_id,user, applicant, signature_binary, nature, duration,int_status,should_approve):
 	by = f'Approved By {temp}'
 	print(int_status)
-	if by in int_status:
-		return int_status  # If already approved, return the existing int_status
+	# if by in int_status:
+	# 	return int_status  # If already approved, return the existing int_status
 	if int_status:
 		int_status += f"|{by}"
 	else:
@@ -1532,6 +1523,7 @@ def approve_pg_leave(cursor,temp, leave_id,user, applicant, signature_binary, na
 @cross_origin(supports_credentials=True)
 def approve_leave():
 	try:
+		print('ikkada')
 		if (not session.get('user_info') or not check_user(session.get('user_info')['email'])):
 			return get_error_response("Forbidden")
 		leave_id = request.json['leave_id']
@@ -1542,6 +1534,7 @@ def approve_leave():
 		except:
 			signature_binary = signature
 		db.reconnect()
+		
 		connect = db
 		cursor = connect.cursor()
 		applicant = get_user_dic_by_user_id(applicant_id)
@@ -1572,6 +1565,7 @@ def approve_leave():
 			message = util.leave_status_message(cols, vals)
 			util.send_email(applicant['email'], message, "Leave Status Updated")
 			connect.commit()
+			
 
 		else:
 			cursor.execute(
@@ -1620,6 +1614,7 @@ def submit_office_signature():
         
         # Check user's position
         position = user.get("position", "")
+        print(position)
         if position in ["ar", "dr", "supdt"]:
             # Set ar_dr_supdt_sig column
             cursor.execute(
@@ -1773,12 +1768,12 @@ def disapprove_leave():
             if user["position"] == "hod":
                 by = f'Disapproved By Hod-{user["name"]}'
                 cursor.execute(
-                    "UPDATE leaves SET status = %s WHERE leave_id = %s", ('Pending', leave_id))
+                    "UPDATE leaves SET status = %s WHERE leave_id = %s", ('Disapproved', leave_id))
                 connect.commit()
             elif user["position"] == "dean":
                 by = f'Disapproved By Dean-{user["name"]}'
                 cursor.execute(
-                    "UPDATE leaves SET status = %s WHERE leave_id = %s", ('Pending', leave_id))
+                    "UPDATE leaves SET status = %s WHERE leave_id = %s", ('Disapproved', leave_id))
                 connect.commit()
             else:
                 return get_error_response("Leave Status Not Updated")
@@ -1812,13 +1807,13 @@ def disapprove_leave():
             applicant = get_user_dic_by_user_id(applicant_id)
             by = f'Disapproved By {user["name"]}'
             if curr_int_status:
-                curr_int_status += f"|{by}"
+                curr_int_status = by
             else:
                 curr_int_status = by
             cursor.execute(
-                "UPDATE pg_leaves SET status = %s, int_status=%s WHERE leave_id = %s", ('Pending', curr_int_status, leave_id))
+                "UPDATE pg_leaves SET status = %s, int_status=%s WHERE leave_id = %s", ('Disapproved', curr_int_status, leave_id))
             cols = ["Leave ID", "Status"]
-            vals = [leave_id, 'Pending']
+            vals = [leave_id, 'Disapproved']
             message = util.leave_status_message(cols, vals)
             util.send_email(applicant['email'], message, "Leave Status Updated")
             if curr_status_of_leave.lower().startswith("approved"):

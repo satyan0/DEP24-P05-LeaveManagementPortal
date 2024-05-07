@@ -23,6 +23,7 @@ export default function PGApplyLeave({ toast }) {
 	const [formLoading, setFormLoading] = useState(false);
 	const [sigUrl, setSigUrl] = useState("");
 	const [disablButton, setDisableButton] = useState(false);
+	const [showDurationMismatchMessage, setShowDurationMismatchMessage] = useState(false);
 
 	const sigPadRef = useRef();
 	const formRef = useRef()
@@ -47,6 +48,11 @@ export default function PGApplyLeave({ toast }) {
 		return todayString
 	}
 
+	const handleDateChange = async (e) => {
+		handleDurationChange(); // Recalculate duration and show/hide the mismatch message
+		handleInputChange(e); // Handle other input changes
+	};
+
 	const handleInputChange = async (e) => {
 		return
 	};
@@ -61,6 +67,46 @@ export default function PGApplyLeave({ toast }) {
 		}
 		setFileName(`${currentUser.user_id}_${Date.now()}_${file.name}`);
 	};
+
+	const handleDurationChange = () => {
+		// Get the values of start date, end date, and duration
+		const startDate = formRef.current.querySelector('#form_sdate').value;
+		const endDate = formRef.current.querySelector('#form_edate').value;
+		const newDuration = parseInt(formRef.current.querySelector('#form_duration').value);
+	
+		// Update the state with the new duration value
+		setDuration(newDuration);
+	
+		// Check if both start date and end date are set
+		if (startDate && endDate) {
+			// Construct the form data
+			const formData = {
+				form_sdate: startDate,
+				form_edate: endDate,
+				form_duration: newDuration
+			};
+	
+			// Check if the duration mismatches the dates
+			const hasDurationMismatch = !isDurationMatchingDates(formData);
+	
+			// Update the state to show/hide the duration mismatch message
+			setShowDurationMismatchMessage(hasDurationMismatch);
+		} else {
+			// If either start date or end date is not set, hide the duration mismatch message
+			setShowDurationMismatchMessage(false);
+		}
+	};
+	
+
+	const isDurationMatchingDates = (formData) => {
+		const startDate = new Date(formData.form_sdate);
+		const endDate = new Date(formData.form_edate);
+		const calculatedDuration = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+		setShowDurationMismatchMessage(calculatedDuration !== formData.form_duration);
+		return calculatedDuration === formData.form_duration;
+	}
+	
+	
 
 	const clear = () => {
 		sigPadRef.current.clear();
@@ -240,7 +286,7 @@ export default function PGApplyLeave({ toast }) {
 												</Col >
 												<Col className="col-al">
 													<legend htmlFor="form_duration" style={{ fontSize: "18px" }}>Duration of leave <span style={{color: "red"}}>*</span></legend>
-													<input required type="number" className="form-control" id="form_duration" placeholder="Duration" />
+													<input required type="number" className="form-control" id="form_duration" placeholder="Duration" onChange={(e)=>handleDateChange(e)} />
 												</Col >
 											</Row >
 											{
@@ -261,11 +307,11 @@ export default function PGApplyLeave({ toast }) {
 											<Row className="row-al">
 												<Col className="col-al">
 													<legend htmlFor="form_sdate" style={{ fontSize: "18px" }}>Start Date <span style={{color: "red"}}>*</span></legend>
-													<input required type="date" id="form_sdate" placeholder="Pick start date" className="form-control" onChange={async (e) => { handleInputChange(e) }}></input>
+													<input required type="date" id="form_sdate" placeholder="Pick start date" className="form-control" onChange={async (e) => { handleInputChange(e); handleDateChange(e) }}></input>
 												</Col >
 												<Col className="col-al">
 													<legend htmlFor="form_edate" style={{ fontSize: "18px" }}>End Date <span style={{color: "red"}}>*</span></legend>
-													<input required type="date" id="form_edate" placeholder="Pick end date" className="form-control" onChange={async (e) => { handleInputChange(e) }} ></input>
+													<input required type="date" id="form_edate" placeholder="Pick end date" className="form-control" onChange={async (e) => { handleInputChange(e); handleDateChange(e) }} ></input>
 												</Col >
 											</Row >
 
@@ -363,6 +409,17 @@ export default function PGApplyLeave({ toast }) {
 													}}>
 													</img>
 												</div>
+											</Row>
+											<Row className="row-al">
+												<Col>
+													{/* <span style={{ color: "red" }}><br /> {dateErrorMessage}</span> */}
+													{showDurationMismatchMessage && (
+														<span style={{ color: "red" }}>
+															<br />
+															Are you sure you want to apply? The duration you've entered doesn't match the actual duration.
+														</span>
+													)}
+												</Col>
 											</Row>
 											<Row className="row-al">
 												<Col>

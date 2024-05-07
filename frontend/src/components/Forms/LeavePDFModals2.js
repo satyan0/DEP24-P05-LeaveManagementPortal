@@ -193,35 +193,49 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
 
   const saveLeave = (leave_id) => {
     const pdf = new jsPDF("portrait", "pt", "a2");
-    const input = document.getElementById("first-page-" + leave_id);
-    html2canvas(input, {
-      letterRendering: 1,
-      allowTaint: true,
-      logging: true,
-      useCORS: true,
-    })
-      //By passing this option in function Cross origin images will be rendered properly in the downloaded version of the PDF
-      .then((canvas) => {
-        // document.getElementById("leave-container-" + leave_id).parentNode.style.overflow = 'hidden';
+    const input1 = document.getElementById("first-page-" + leave_id);
+    const input2 = document.getElementById("second-page-" + leave_id);
+    
+    // Capture the first page
+    html2canvas(input1, {
+        letterRendering: 1,
+        allowTaint: true,
+        logging: true,
+        useCORS: true,
+    }).then((canvas1) => {
+        const imgData1 = canvas1.toDataURL("image/png");
 
-        var imgData = canvas.toDataURL("image/png");
-        // window.open(imgData, "toDataURL() image", "width=800, height=800");
+        // Calculate scaling factor for the first page
+        const scaleFactor1 = (pdf.internal.pageSize.getWidth() - 100) / canvas1.width; // Adjusted for left and right margin
+        const scaledWidth1 = canvas1.width * scaleFactor1;
+        const scaledHeight1 = canvas1.height * scaleFactor1;
 
-        pdf.addImage(imgData, "JPEG", 35, 50);
-        const input1 = document.getElementById("second-page-" + leave_id);
-        html2canvas(input1)
-          .then((canvas) => {
-            // document.getElementById("leave-container-" + leave_id).parentNode.style.overflow = 'hidden';
+        pdf.addImage(imgData1, "JPEG", 50, 50, scaledWidth1, scaledHeight1);
 
-            var imgData = canvas.toDataURL('image/png');
-            // window.open(imgData, "toDataURL() image", "width=800, height=800");
+        // Capture the second page
+        html2canvas(input2, {
+            letterRendering: 1,
+            allowTaint: true,
+            logging: true,
+            useCORS: true,
+        }).then((canvas2) => {
+            const imgData2 = canvas2.toDataURL("image/png");
+
+            // Calculate scaling factor for the second page
+            const scaleFactor2 = (pdf.internal.pageSize.getWidth() - 100) / canvas2.width; // Adjusted for left and right margin
+            const scaledWidth2 = canvas2.width * scaleFactor2;
+            const scaledHeight2 = canvas2.height * scaleFactor2;
+
             pdf.addPage();
-            pdf.addImage(imgData, 'JPEG', 35, 50);
-            pdf.save(`${"leave-" + leave_id}.pdf`);
-          })
+            pdf.addImage(imgData2, "JPEG", 50, 50, scaledWidth2, scaledHeight2);
+            
+            // Save the PDF
+            pdf.save(`leave-${leave_id}.pdf`);
+        });
+    });
+};
 
-      });
-  };
+
 
   function get_status_element(leave, position = null) {
     if (!leave) return ''
@@ -310,6 +324,64 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
         );
     }
     return '';
+}
+
+function get_registrar_status_element(leave, position = null) {
+  if (!leave) return '';
+  let imageUrl = "";
+  let status = leave.status.toLowerCase();
+  
+  if (position === "registrar" && leave.registrar_sig && leave.registrar_sig[0]) {
+      imageUrl = "data:image/png;base64," + String(leave.registrar_sig);
+  }else if (!position && leave.registrar_sig && leave.registrar_sig[0]) {
+      imageUrl = "data:image/png;base64," + String(leave.registrar_sig);
+  }
+
+  if (imageUrl.length) {
+      return (
+          <img
+              style={{
+                  maxHeight: "60px",
+                  maxWidth: "450px",
+                  width: "40%",
+              }}
+              src={imageUrl}
+              alt="Signature"
+          />
+      );
+  }
+  return '';
+}
+
+function get_ardr_status_element(leave, position = null) {
+  if (!leave) return '';
+  let imageUrl = "";
+  let status = leave.status.toLowerCase();
+  
+  if (position === "ar" && leave.ar_dr_supdt_sig && leave.ar_dr_supdt_sig[0]) {
+      imageUrl = "data:image/png;base64," + String(leave.ar_dr_supdt_sig);
+  } else if (position === "dr" && leave.ar_dr_supdt_sig && leave.ar_dr_supdt_sig[0]) {
+      imageUrl = "data:image/png;base64," + String(leave.ar_dr_supdt_sig);
+  } else if (position === "supdt" && leave.ar_dr_supdt_sig && leave.ar_dr_supdt_sig[0]) {
+      imageUrl = "data:image/png;base64," + String(leave.ar_dr_supdt_sig);
+  } else if (!position && leave.ar_dr_supdt_sig && leave.ar_dr_supdt_sig[0]) {
+      imageUrl = "data:image/png;base64," + String(leave.ar_dr_supdt_sig);
+  }
+
+  if (imageUrl.length) {
+      return (
+          <img
+              style={{
+                  maxHeight: "60px",
+                  maxWidth: "450px",
+                  width: "40%",
+              }}
+              src={imageUrl}
+              alt="Signature"
+          />
+      );
+  }
+  return '';
 }
 
 
@@ -410,6 +482,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
                       fontWeight: "bold",
                       fontSize: "14px",
                       marginBottom: "5px",
+                      padding: "10px"
                     }}
                   >
                     (Earned Leave/Half Pay Leave/Extra Ordinary Leave/Commuted
@@ -421,68 +494,68 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
 
               <div
                 className="row"
-                style={{ fontSize: "14px", minHeight: "38.6px" }}
+                style={{ fontSize: "14px", minHeight: "50px" }}
               >
                 <div
                   className="col-6"
-                  style={{ textAlign: "left", border: "1px solid" }}
+                  style={{ textAlign: "left", border: "1px solid", padding: "10px" }}
                 >
                   1. आवेदक का नाम/ Name of the applicant
                 </div>
                 <div
                   className="col-6"
-                  style={{ textAlign: "left", border: "1px solid" }}
+                  style={{ textAlign: "left", border: "1px solid", padding: "10px" }}
                 >
                   {leave?.name}
                 </div>
               </div>
               <div
                 className="row"
-                style={{ fontSize: "14px", minHeight: "38.6px" }}
+                style={{ fontSize: "14px", minHeight: "50px" }}
               >
                 <div
                   className="col-6"
-                  style={{ textAlign: "left", border: "1px solid" }}
+                  style={{ textAlign: "left", border: "1px solid", padding: "10px" }}
                 >
                   2. पद धारित / Post held
                 </div>
                 <div
                   className="col-6"
-                  style={{ textAlign: "left", border: "1px solid" }}
+                  style={{ textAlign: "left", border: "1px solid", padding: "10px" }}
                 >
                   {leave?.position.toUpperCase()}
                 </div>
               </div>
               <div
                 className="row"
-                style={{ fontSize: "14px", minHeight: "38.6px" }}
+                style={{ fontSize: "14px", minHeight: "50px" }}
               >
                 <div
                   className="col-6"
-                  style={{ textAlign: "left", border: "1px solid" }}
+                  style={{ textAlign: "left", border: "1px solid", padding: "10px" }}
                 >
                   3.विभाग/कार्यालय/अनुभाग/Department./Office/Section
                 </div>
                 <div
                   className="col-6"
-                  style={{ textAlign: "left", border: "1px solid" }}
+                  style={{ textAlign: "left", border: "1px solid", padding: "10px" }}
                 >
                   {leave?.department?.toUpperCase()}
                 </div>
               </div>
               <div
                 className="row"
-                style={{ fontSize: "14px", minHeight: "38.6px" }}
+                style={{ fontSize: "14px", minHeight: "50px" }}
               >
                 <div
                   className="col-6"
-                  style={{ textAlign: "left", border: "1px solid" }}
+                  style={{ textAlign: "left", border: "1px solid", padding: "10px" }}
                 >
                   4. आवेवदत छुट्टी का प्रकार/ Nature of Leave applied for
                 </div>
                 <div
                   className="col-6"
-                  style={{ textAlign: "left", border: "1px solid" }}
+                  style={{ textAlign: "left", border: "1px solid", padding: "10px" }}
                 >
                   <p>{leave?.type_of_leave}</p>
                   {/* <p>From: {leave?.start_date.split("00:00:0}से/To ___________ तक</p> */}
@@ -491,18 +564,18 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
 
               <div
                 className="row"
-                style={{ fontSize: "14px", minHeight: "38.6px" }}
+                style={{ fontSize: "14px", minHeight: "50px" }}
               >
                 <div
                   className="col-6"
-                  style={{ textAlign: "left", border: "1px solid" }}
+                  style={{ textAlign: "left", border: "1px solid", padding: "10px" }}
                 >
                   5. छुट्टी की अवधि/ Period of Leave <br />
                 </div>
                 <div className="col-6" style={{ textAlign: "left" }}>
                   <div
                     className="row"
-                    style={{ fontSize: "14px", minHeight: "38.6px" }}
+                    style={{ fontSize: "14px", minHeight: "50px" }}
                   >
                     <div
                       className="col-4"
@@ -510,6 +583,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
                         textAlign: "left",
                         border: "1px solid",
                         fontSize: "14px",
+                        padding: "10px"
                       }}
                     >
                       से/ From:
@@ -520,6 +594,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
                         textAlign: "left",
                         border: "1px solid",
                         fontSize: "14px",
+                        padding: "10px"
                       }}
                     >
                       तक/To:
@@ -530,6 +605,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
                         textAlign: "left",
                         border: "1px solid",
                         fontSize: "12px",
+                        padding: "10px"
                       }}
                     >
                       दिनों की संख्या/No. of days
@@ -538,7 +614,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
 
                   <div
                     className="row"
-                    style={{ fontSize: "14px", minHeight: "38.6px" }}
+                    style={{ fontSize: "14px", minHeight: "50px" }}
                   >
                     <div
                       className="col-4"
@@ -546,6 +622,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
                         textAlign: "left",
                         border: "1px solid",
                         fontSize: "14px",
+                        padding: "10px"
                       }}
                     >
                       {get_date(leave?.start_date)}
@@ -556,6 +633,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
                         textAlign: "left",
                         border: "1px solid",
                         fontSize: "14px",
+                        padding: "10px"
                       }}
                     >
                       {get_date(leave?.end_date)}
@@ -566,6 +644,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
                         textAlign: "left",
                         border: "1px solid",
                         fontSize: "14px",
+                        padding: "10px"
                       }}
                     >
                       <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{leave?.duration}</p>
@@ -577,11 +656,11 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
 
               <div
                 className="row"
-                style={{ fontSize: "14px", minHeight: "38.6px" }}
+                style={{ fontSize: "14px", minHeight: "50px" }}
               >
                 <div
                   className="col-6"
-                  style={{ textAlign: "left", border: "1px solid" }}
+                  style={{ textAlign: "left", border: "1px solid", padding: "10px" }}
                 >
                   6. रविवार और अवकाश, यदि कोई हो, को छुट्टी के पहले/प्रत्यय में लगाने का प्रस्ताव है
                   <br></br>
@@ -591,7 +670,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
                 <div className="col-6" style={{ textAlign: "left" }}>
                   <div
                     className="row"
-                    style={{ fontSize: "14px", minHeight: "38.6px" }}
+                    style={{ fontSize: "14px", minHeight: "50px" }}
                   >
                     <div
                       className="col-2"
@@ -599,6 +678,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
                         textAlign: "left",
                         border: "1px solid",
                         fontSize: "14px",
+                        padding: "10px"
                       }}
                     >
 
@@ -622,6 +702,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
                         textAlign: "left",
                         border: "1px solid",
                         fontSize: "14px",
+                        padding: "10px"
                       }}
                     >
                       तक/To:
@@ -632,6 +713,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
                         textAlign: "left",
                         border: "1px solid",
                         fontSize: "12px",
+                        padding: "10px"
                       }}
                     >
                       दिनों की संख्या/No. of days
@@ -639,7 +721,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
                   </div>
                   <div
                     className="row"
-                    style={{ fontSize: "14px", minHeight: "38.6px" }}
+                    style={{ fontSize: "14px", minHeight: "50px" }}
                   >
                     <div
                       className="col-4"
@@ -647,6 +729,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
                         textAlign: "left",
                         border: "1px solid",
                         fontSize: "14px",
+                        padding: "10px"
                       }}
                     >
                       {get_date(leave?.suffix_start_date)}
@@ -657,6 +740,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
                         textAlign: "left",
                         border: "1px solid",
                         fontSize: "14px",
+                        padding: "10px"
                       }}
                     >
                       {get_date(leave?.suffix_end_date)}
@@ -667,6 +751,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
                         textAlign: "left",
                         border: "1px solid",
                         fontSize: "14px",
+                        padding: "10px"
                       }}
                     >
                       <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{leave?.duration}</p>
@@ -675,7 +760,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
 
                   <div
                     className="row"
-                    style={{ fontSize: "14px", minHeight: "38.6px" }}
+                    style={{ fontSize: "14px", minHeight: "50px" }}
                   >
                     <div
                       className="col-2"
@@ -683,6 +768,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
                         textAlign: "left",
                         border: "1px solid",
                         fontSize: "14px",
+                        padding: "10px"
                       }}
                     >
                       के पूर्व
@@ -695,6 +781,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
                         textAlign: "left",
                         border: "1px solid",
                         fontSize: "14px",
+                        padding: "10px"
                       }}
                     >
                       से/ From:
@@ -705,6 +792,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
                         textAlign: "left",
                         border: "1px solid",
                         fontSize: "14px",
+                        padding: "10px"
                       }}
                     >
                       तक/To:
@@ -715,6 +803,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
                         textAlign: "left",
                         border: "1px solid",
                         fontSize: "12px",
+                        padding: "10px"
                       }}
                     >
                       दिनों की संख्या/No. of days
@@ -723,7 +812,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
 
                   <div
                     className="row"
-                    style={{ fontSize: "14px", minHeight: "38.6px" }}
+                    style={{ fontSize: "14px", minHeight: "50px" }}
                   >
                     <div
                       className="col-4"
@@ -731,6 +820,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
                         textAlign: "left",
                         border: "1px solid",
                         fontSize: "14px",
+                        padding: "10px"
                       }}
                     >
                       {get_date(leave?.prefix_start_date)}
@@ -741,6 +831,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
                         textAlign: "left",
                         border: "1px solid",
                         fontSize: "14px",
+                        padding: "10px"
                       }}
                     >
                       {get_date(leave?.prefix_end_date)}
@@ -751,6 +842,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
                         textAlign: "left",
                         border: "1px solid",
                         fontSize: "14px",
+                        padding: "10px"
                       }}
                     >
                       <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{leave?.duration}</p>
@@ -762,28 +854,28 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
 
               <div
                 className="row"
-                style={{ fontSize: "14px", minHeight: "38.6px" }}
+                style={{ fontSize: "14px", minHeight: "50px" }}
               >
                 <div
                   className="col-6"
-                  style={{ textAlign: "left", border: "1px solid" }}
+                  style={{ textAlign: "left", border: "1px solid", padding: "10px" }}
                 >
                   7. उद्देश्य / Purpose
                 </div>
                 <div
                   className="col-6"
-                  style={{ textAlign: "left", border: "1px solid" }}
+                  style={{ textAlign: "left", border: "1px solid", padding: "10px" }}
                 >
                   {leave?.purpose}
                 </div>
               </div>
               <div
                 className="row"
-                style={{ fontSize: "14px", minHeight: "38.6px" }}
+                style={{ fontSize: "14px", minHeight: "50px" }}
               >
                 <div
                   className="col-6"
-                  style={{ textAlign: "left", border: "1px solid" }}
+                  style={{ textAlign: "left", border: "1px solid", padding: "10px" }}
                 >
                   8. कक्षाओं, प्रशासनिक जिम्मेदारियों के लिए वैकल्पिक व्यवस्था,
                   आदि (यदि कोई हो)/<br />
@@ -792,7 +884,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
                 </div>
                 <div
                   className="col-6"
-                  style={{ textAlign: "left", border: "1px solid" }}
+                  style={{ textAlign: "left", border: "1px solid", padding: "10px" }}
                 >
                   These are alternative arrangements
                   <br />
@@ -805,10 +897,10 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
                 style={{
                   border: "1px solid",
                   fontSize: "14px",
-                  minHeight: "38.6px",
+                  minHeight: "50px",
                 }}
               >
-                <div className="col-12" style={{ textAlign: "left" }}>
+                <div className="col-12" style={{ textAlign: "left", padding: "10px" }}>
                   9.
                   मैं अवकाश के दौरान ब्लॉक वर्षों के लिए अवकाश यात्रा रियायत का लाभ लेने का प्रस्ताव करता हूं/नहीं करता हूं। / I
                   propose/do not propose to avail myself of Leave Travel
@@ -819,11 +911,11 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
 
               <div
                 className="row"
-                style={{ fontSize: "14px", minHeight: "38.6px" }}
+                style={{ fontSize: "14px", minHeight: "50px" }}
               >
                 <div
                   className="col-6"
-                  style={{ textAlign: "left", border: "1px solid" }}
+                  style={{ textAlign: "left", border: "1px solid", padding: "10px" }}
                 >
                   10. छुट्टी के दौरान पता / Address during the leave
                 </div>
@@ -833,7 +925,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
                     style={{
                       height: "38px",
                       fontSize: "14px",
-                      minHeight: "38.6px",
+                      minHeight: "50px",
                     }}
                   >
                     <div
@@ -842,6 +934,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
                         textAlign: "left",
                         border: "1px solid",
                         fontSize: "14px",
+                        padding: "10px"
                       }}
                     >
                       <p></p>
@@ -852,7 +945,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
                     style={{
                       height: "38px",
                       fontSize: "14px",
-                      minHeight: "38.6px",
+                      minHeight: "50px",
                     }}
                   >
                     <div
@@ -871,6 +964,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
                         textAlign: "left",
                         border: "1px solid",
                         fontSize: "14px",
+                        padding: "10px"
                       }}
                     >
                       वपन/PIN:
@@ -882,7 +976,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
                     style={{
                       height: "38px",
                       fontSize: "14px",
-                      minHeight: "38.6px",
+                      minHeight: "50px",
                     }}
                   >
                     <div
@@ -901,11 +995,11 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
 
               <div
                 className="row"
-                style={{ fontSize: "14px", minHeight: "38.6px" }}
+                style={{ fontSize: "14px", minHeight: "50px" }}
               >
                 <div
                   className="col-6"
-                  style={{ textAlign: "left", border: "1px solid" }}
+                  style={{ textAlign: "left", border: "1px solid", padding: "10px"}}
                 >
                   11. क्या स्टेशन छुट्टी की आवश्यकता है/Whether Station leave
                   is required
@@ -913,7 +1007,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
                 <div className="col-6" style={{ textAlign: "left" }}>
                   <div
                     className="row"
-                    style={{ border: "1px solid", minHeight: "38.6px" }}
+                    style={{ border: "1px solid", minHeight: "50px",padding: "10px" }}
                   >
                     हाँ या नहीं /Yes /No : यदि हाँ तो /If yes :{" "}
                     {leave?.is_station}
@@ -923,7 +1017,8 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
                     style={{
                       border: "1px solid",
                       fontSize: "14px",
-                      minHeight: "38.6px",
+                      minHeight: "50px",
+                      padding: "10px"
                     }}
                   >
                     से/From {get_date(leave?.station_start_date)} तक /To{" "}
@@ -1012,7 +1107,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
                 period, from <u>{get_date(leave?.start_date)}</u> To <u>{get_date(leave?.end_date)}</u> is available as per
                 following details:
               </p>
-              <div className="row" style={{ border: "1px solid" }}>
+              <div className="row" style={{ border: "1px solid",padding: "10px" }}>
                 <div className="col-4">
                   Balance as on Date /<br />
                   आज तक शेष
@@ -1027,13 +1122,13 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
                 </div>
               </div>
               <div className="row">
-                <div className="col-4" style={{ border: "1px solid" }}>
+                <div className="col-4" style={{ border: "1px solid",padding: "10px" }}>
                   {leave?.total_casual_leaves - leave?.taken_casual_leaves}
                 </div>
-                <div className="col-4" style={{ border: "1px solid" }}>
+                <div className="col-4" style={{ border: "1px solid",padding: "10px" }}>
                   {leave?.duration}
                 </div>
-                <div className="col-4" style={{ border: "1px solid" }}>
+                <div className="col-4" style={{ border: "1px solid", padding: "10px" }}>
                   {leave?.total_casual_leaves -
                     leave?.taken_casual_leaves -
                     leave?.duration}
@@ -1051,10 +1146,12 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
                   (Deptt.)/(Estt.)
                 </div>
                 <div className="flex flex-col justify-center items-center col-4">
-                  {get_office_status_element(leave, currentUser?.position)}
+                {get_ardr_status_element(leave, null)}
                   अधी./सहा.कु ऱसलिव/उऩकु ऱसलिव/Supdt./AR/DR
                 </div>
-                <div className="flex flex-col justify-center items-center col-4">रजिस्ट्रार/Registrar</div>
+                <div className="flex flex-col justify-center items-center col-4">                
+                {get_registrar_status_element(leave, null)}
+                रजिस्ट्रार/Registrar</div>
               </div>
             </div>
             <hr />
@@ -1075,13 +1172,15 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
               <br />
               <div className="row" style={{ textAlign: "right" }}>
                 <div className="col-4"></div>
-                <div className="col-8">
-                  कुलसवाव/अवधष्ठाता (संकार् मामलेएवं प्रशासन)/वनदेशक के
-                  हस्ताक्षि
+                <div className="col-8 text-right">
+                  <div className="flex justify-center">
+                      {get_registrar_status_element(leave, null)}
+                  </div>
+                  कुलसवाव/अवधष्ठाता (संकार् मामलेएवं प्रशासन)/वनदेशक के हस्ताक्षि
                   <br />
-                  Signature of Registrar / Dean(Faculty Affairs &
-                  Administration) / Director
-                </div>
+                  Signature of Registrar / Dean(Faculty Affairs & Administration) / Director
+              </div>
+
               </div>
             </div>
             <hr />
@@ -1169,7 +1268,7 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
             ) : (
               ""
             )}
-            {(from === "check_applications" && (['ar'].includes(currentUser?.position)||['office'].includes(currentUser?.position))) ? (
+            {(from === "check_applications" && (['registrar'].includes(currentUser?.position)||['supdt'].includes(currentUser?.position)||['dr'].includes(currentUser?.position)||['ar'].includes(currentUser?.position)||['office'].includes(currentUser?.position))) ? (
               <>
                 <Row>
                   <Col>

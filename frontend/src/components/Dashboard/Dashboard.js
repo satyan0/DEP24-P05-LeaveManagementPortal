@@ -462,7 +462,9 @@ export default function Dashboard({ toast }) {
                 <CustomCalendar data={leavesStatus} />
                 <br />
                 <span className="recent-application-title">
+                  <div className="text-blue-500  py-2 mt-1">
                   Recent Application{" "}
+                  </div>
                 </span>
                 <div class="recent-box">
                   {recentApplication ? (

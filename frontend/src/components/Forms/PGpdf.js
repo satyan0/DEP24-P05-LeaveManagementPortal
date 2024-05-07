@@ -46,10 +46,12 @@ const PGLeavePdfModal = ({ toast, from }) => {
       binaryData = new Uint8Array(arrayBuffer);
     }
     try {
+      console.log(leave_id, currentUser.level, leave.user_id);
       const resp = await httpClient.post(
         `${process.env.REACT_APP_API_HOST}/approve_leave`,
         { leave_id, level: currentUser.level, signature: binaryData, applicant_id: leave.user_id }
       );
+      console.log(resp);
       if (resp.data.status == "error") {
         toast.error(resp.data.emsg, toast.POSITION.BOTTOM_RIGHT);
       } else {
@@ -184,24 +186,55 @@ const PGLeavePdfModal = ({ toast, from }) => {
   const saveLeave = (leave_id) => {
     const pdf = new jsPDF("portrait", "pt", "a2");
     const input = document.getElementById("first-page-" + leave_id);
+    
+    // Get the width and height of the input element
+    const inputWidth = input.offsetWidth;
+    const inputHeight = input.offsetHeight;
+
+    // Set the margins (adjust as needed) 
+    const leftMargin = 50; // Left margin in points
+    const topMargin = 50; // Top margin in points
+
+    // Calculate the available width and height within margins
+    const availableWidth = pdf.internal.pageSize.getWidth() - (2 * leftMargin);
+    const availableHeight = pdf.internal.pageSize.getHeight() - (2 * topMargin);
+
+    // Calculate the aspect ratio of the input element
+    const aspectRatio = inputWidth / inputHeight;
+
+    // Calculate the width and height to fit within margins while maintaining aspect ratio
+    let imgWidth, imgHeight;
+    if (aspectRatio > 1) { // Landscape aspect ratio
+        imgWidth = availableWidth;
+        imgHeight = imgWidth / aspectRatio;
+    } else { // Portrait or square aspect ratio
+        imgHeight = availableHeight;
+        imgWidth = imgHeight * aspectRatio;
+    }
+
+    // Calculate the positioning to center the image within margins
+    const x = leftMargin + (availableWidth - imgWidth) / 2;
+    const y = topMargin + (availableHeight - imgHeight) / 2;
+
     html2canvas(input, {
-      letterRendering: 1,
-      allowTaint: true,
-      logging: true,
-      useCORS: true,
+        letterRendering: 1,
+        allowTaint: true,
+        logging: true,
+        useCORS: true,
     })
-      //By passing this option in function Cross origin images will be rendered properly in the downloaded version of the PDF
-      .then((canvas) => {
-        // document.getElementById("leave-container-" + leave_id).parentNode.style.overflow = 'hidden';
-
+    .then((canvas) => {
+        // Convert the canvas to a data URL
         var imgData = canvas.toDataURL("image/png");
-        // window.open(imgData, "toDataURL() image", "width=800, height=800");
 
-        pdf.addImage(imgData, "JPEG", 35, 50);
+        // Add the image to the PDF with calculated dimensions and positioning
+        pdf.addImage(imgData, "JPEG", x, y, imgWidth, imgHeight);
 
+        // Save the PDF with the specified filename
         pdf.save(`${"leave-" + leave_id}.pdf`);
-      });
-  };
+    });
+};
+
+
 
   function get_status_element(leave, position = null) {
     if (!leave) return ''
@@ -248,7 +281,6 @@ const PGLeavePdfModal = ({ toast, from }) => {
       )
     }
     return '';
-
   }
 
   useEffect(() => {
@@ -314,10 +346,10 @@ const PGLeavePdfModal = ({ toast, from }) => {
                 {/* <h3 style={{ marginBottom: "0px" }}>
                   भारतीय प्रौद्योगिकी संस्थान रोपड़
                 </h3> */}
-                <h3 style={{ marginBottom: "0px" }}>
+                <h3 style={{ marginBottom: "10px" }}>
                   INDIAN INSTITUTE OF TECHNOLOGY ROPAR
                 </h3>
-                <h5>
+                <h5 style={{marginBottom: "20px"}}>
                   LEAVE APPLICATION FORM FOR PG
                 </h5>
                 <h5>
@@ -337,92 +369,92 @@ const PGLeavePdfModal = ({ toast, from }) => {
 
               <div
                 className="row"
-                style={{ marginTop: "15px", fontSize: "14px", minHeight: "38.6px" }}
+                style={{ marginTop: "15px", fontSize: "14px", minHeight: "50px" }}
               >
                 <div
                   className="col-1"
-                  style={{ textAlign: "left", border: "1px solid" }}
+                  style={{ textAlign: "left", border: "1px solid", padding: "10px" }}
                 >
                   1.
                 </div>
                 <div
                   className="col-5"
-                  style={{ textAlign: "left", border: "1px solid" }}
+                  style={{ textAlign: "left", border: "1px solid", padding:"10px" }}
                 >
                   Name of the student
                 </div>
                 <div
                   className="col-6"
-                  style={{ textAlign: "left", border: "1px solid" }}
+                  style={{ textAlign: "left", border: "1px solid", padding:"10px" }}
                 >
                   {leave?.name}
                 </div>
               </div>
               <div
                 className="row"
-                style={{ fontSize: "14px", minHeight: "38.6px" }}
+                style={{ fontSize: "14px", minHeight: "50px" }}
               >
                 <div
                   className="col-1"
-                  style={{ textAlign: "left", border: "1px solid" }}
+                  style={{ textAlign: "left", border: "1px solid", padding:"10px" }}
                 >
                   2.
                 </div>
                 <div
                   className="col-5"
-                  style={{ textAlign: "left", border: "1px solid" }}
+                  style={{ textAlign: "left", border: "1px solid", padding:"10px" }}
                 >
                   Entry No.
                 </div>
                 <div
                   className="col-6"
-                  style={{ textAlign: "left", border: "1px solid" }}
+                  style={{ textAlign: "left", border: "1px solid", padding:"10px" }}
                 >
                   {leave?.entry_number?.toUpperCase()}
                 </div>
               </div>
               <div
                 className="row"
-                style={{ fontSize: "14px", minHeight: "38.6px" }}
+                style={{ fontSize: "14px", minHeight: "50px" }}
               >
                 <div
                   className="col-1"
-                  style={{ textAlign: "left", border: "1px solid" }}
+                  style={{ textAlign: "left", border: "1px solid", padding:"10px" }}
                 >
                   3.
                 </div>
                 <div
                   className="col-5"
-                  style={{ textAlign: "left", border: "1px solid" }}
+                  style={{ textAlign: "left", border: "1px solid", padding:"10px" }}
                 >
                   Purpose of leave(whether attending conference/workshop/seminar any other)
                 </div>
                 <div
                   className="col-6"
-                  style={{ textAlign: "left", border: "1px solid" }}
+                  style={{ textAlign: "left", border: "1px solid", padding:"10px" }}
                 >
                   {leave?.purpose}
                 </div>
               </div>
               <div
                 className="row"
-                style={{ fontSize: "14px", minHeight: "38.6px" }}
+                style={{ fontSize: "14px", minHeight: "50px" }}
               >
                 <div
                   className="col-1"
-                  style={{ textAlign: "left", border: "1px solid" }}
+                  style={{ textAlign: "left", border: "1px solid", padding:"10px" }}
                 >
                   4.
                 </div>
                 <div
                   className="col-5"
-                  style={{ textAlign: "left", border: "1px solid" }}
+                  style={{ textAlign: "left", border: "1px solid", padding:"10px" }}
                 >
                   Name of Venue of the Conference/Workshop/Seminar (in case of Duty Leave)
                 </div>
                 <div
                   className="col-6"
-                  style={{ textAlign: "left", border: "1px solid" }}
+                  style={{ textAlign: "left", border: "1px solid", padding:"10px" }}
                 >
                   <p>{leave?.venue}</p>
                   {/* <p>From: {leave?.start_date.split("00:00:0}से/To ___________ तक</p> */}
@@ -431,24 +463,24 @@ const PGLeavePdfModal = ({ toast, from }) => {
 
               <div
                 className="row"
-                style={{ fontSize: "14px", minHeight: "38.6px" }}
+                style={{ fontSize: "14px", minHeight: "50px" }}
               >
                 <div
                   className="col-1"
-                  style={{ textAlign: "left", border: "1px solid" }}
+                  style={{ textAlign: "left", border: "1px solid", padding:"10px" }}
                 >
                   5.
                 </div>
                 <div
                   className="col-5"
-                  style={{ textAlign: "left", border: "1px solid" }}
+                  style={{ textAlign: "left", border: "1px solid", padding:"10px" }}
                 >
                   Actual Dates of Conference/Workshop/Seminar <br />
                 </div>
                 <div className="col-6" style={{ textAlign: "left" }}>
                   <div
                     className="row"
-                    style={{ fontSize: "14px", minHeight: "38.6px" }}
+                    style={{ fontSize: "14px", minHeight: "50px" }}
                   >
                     <div
                       className="col-6"
@@ -475,7 +507,7 @@ const PGLeavePdfModal = ({ toast, from }) => {
 
                   <div
                     className="row"
-                    style={{ fontSize: "14px", minHeight: "38.6px" }}
+                    style={{ fontSize: "14px", minHeight: "50px" }}
                   >
                     <div
                       className="col-6"
@@ -505,7 +537,7 @@ const PGLeavePdfModal = ({ toast, from }) => {
 
               <div
                 className="row"
-                style={{ fontSize: "14px", minHeight: "38.6px" }}
+                style={{ fontSize: "14px", minHeight: "50px" }}
               >
                 <div
                   className="col-1"
@@ -522,7 +554,7 @@ const PGLeavePdfModal = ({ toast, from }) => {
                 <div className="col-6" style={{ textAlign: "left" }}>
                   <div
                     className="row"
-                    style={{ fontSize: "14px", minHeight: "38.6px" }}
+                    style={{ fontSize: "14px", minHeight: "50px" }}
                   >
                     <div
                       className="col-4"
@@ -558,7 +590,7 @@ const PGLeavePdfModal = ({ toast, from }) => {
 
                   <div
                     className="row"
-                    style={{ fontSize: "14px", minHeight: "38.6px" }}
+                    style={{ fontSize: "14px", minHeight: "50px" }}
                   >
                     <div
                       className="col-4"
@@ -597,7 +629,7 @@ const PGLeavePdfModal = ({ toast, from }) => {
 
               <div
                 className="row"
-                style={{ fontSize: "14px", minHeight: "38.6px" }}
+                style={{ fontSize: "14px", minHeight: "50px" }}
               >
                 <div
                   className="col-1"
@@ -621,7 +653,7 @@ const PGLeavePdfModal = ({ toast, from }) => {
 
               <div
                 className="row"
-                style={{ fontSize: "14px", minHeight: "38.6px" }}
+                style={{ fontSize: "14px", minHeight: "50px" }}
               >
                 <div
                   className="col-1"
@@ -646,7 +678,7 @@ const PGLeavePdfModal = ({ toast, from }) => {
 
               <div
                 className="row"
-                style={{ fontSize: "14px", minHeight: "38.6px" }}
+                style={{ fontSize: "14px", minHeight: "50px" }}
               >
                 <div
                   className="col-1"
@@ -672,7 +704,7 @@ const PGLeavePdfModal = ({ toast, from }) => {
 
               <div
                 className="row"
-                style={{ fontSize: "14px", minHeight: "38.6px" }}
+                style={{ fontSize: "14px", minHeight: "50px" }}
               >
 
                 <div
@@ -691,7 +723,7 @@ const PGLeavePdfModal = ({ toast, from }) => {
                 <div className="col-6" style={{ textAlign: "left" }}>
                   <div
                     className="row"
-                    style={{ border: "1px solid", minHeight: "38.6px" }}
+                    style={{ border: "1px solid", minHeight: "50px" }}
                   >
                     Yes /No : If yes :{" "}
                     {leave?.is_station}
@@ -701,7 +733,7 @@ const PGLeavePdfModal = ({ toast, from }) => {
                     style={{
                       border: "1px solid",
                       fontSize: "14px",
-                      minHeight: "38.6px",
+                      minHeight: "50px",
                     }}
                   >
                     <div className="col-3" style={{ textAlign: "left" }}>
@@ -720,7 +752,7 @@ const PGLeavePdfModal = ({ toast, from }) => {
 
               <div
                 className="row"
-                style={{ fontSize: "14px", minHeight: "38.6px" }}
+                style={{ fontSize: "14px", minHeight: "50px" }}
               >
                 <div
                   className="col-1"
@@ -740,7 +772,7 @@ const PGLeavePdfModal = ({ toast, from }) => {
                     style={{
                       height: "38px",
                       fontSize: "14px",
-                      minHeight: "38.6px",
+                      minHeight: "50px",
                     }}
                   >
                     <div
@@ -759,7 +791,7 @@ const PGLeavePdfModal = ({ toast, from }) => {
                     style={{
                       height: "38px",
                       fontSize: "14px",
-                      minHeight: "38.6px",
+                      minHeight: "50px",
                     }}
                   >
                     <div
@@ -789,7 +821,7 @@ const PGLeavePdfModal = ({ toast, from }) => {
                     style={{
                       height: "38px",
                       fontSize: "14px",
-                      minHeight: "38.6px",
+                      minHeight: "50px",
                     }}
                   >
                     <div
@@ -808,7 +840,7 @@ const PGLeavePdfModal = ({ toast, from }) => {
 
               <div
                 className="row"
-                style={{ fontSize: "14px", minHeight: "38.6px" }}
+                style={{ fontSize: "14px", minHeight: "50px" }}
               >
                 <div
                   className="col-1"
@@ -829,9 +861,6 @@ const PGLeavePdfModal = ({ toast, from }) => {
                   {leave?.remarks}
                 </div>
               </div>
-
-
-
               <div className="row leave-details-signature">
                 <div className="col-6"></div>
                 <div
@@ -874,14 +903,14 @@ const PGLeavePdfModal = ({ toast, from }) => {
               <br />
               <div className="row">
                 <div className="col-4">
-                  {get_status_element(leave, "advisor")}<br />
+                  {get_status_element(leave, "ta_instructor")}<br />
                   Signature of TA instructor
                 </div>
                 <div className="col-4">
 
                 </div>
                 <div className="col-4">
-                  {get_status_element(leave, "ta_instructor")}<br />
+                  {get_status_element(leave, "advisor")}<br />
                   Faculty Advisor
                 </div>
               </div>
@@ -891,26 +920,26 @@ const PGLeavePdfModal = ({ toast, from }) => {
 
             <hr />
 
-            <div className="row" style={{ border: "1px solid" }}>
-              <div className="col-4" style={{ border: "1px solid" }}>
+            <div className="row" style={{ }}>
+              <div className="col-4" style={{ border: "1px solid", padding:"10px" }}>
                 Balance as on Date /<br />
               </div>
-              <div className="col-4" style={{ border: "1px solid" }}>
+              <div className="col-4" style={{ border: "1px solid", padding:"10px" }}>
                 Leave Applied For (No. of days) /<br />
               </div>
-              <div className="col-4" style={{ border: "1px solid" }}>
+              <div className="col-4" style={{ border: "1px solid", padding:"10px" }}>
                 Balance / <br />
               </div>
             </div>
             <div className="row">
-              <div className="col-4" style={{ border: "1px solid" }}>
+              <div className="col-4" style={{ border: "1px solid", padding:"10px" }}>
                 {leave ? (leave.total_pg_leaves - leave.taken_pg_leaves) : ""}
                 { }
               </div>
-              <div className="col-4" style={{ border: "1px solid" }}>
+              <div className="col-4" style={{ border: "1px solid", padding:"10px" }}>
                 {leave?.duration}
               </div>
-              <div className="col-4" style={{ border: "1px solid" }}>
+              <div className="col-4" style={{ border: "1px solid", padding:"10px" }}>
                 {leave ? (leave.total_pg_leaves - leave.taken_pg_leaves - leave.duration) : ""}
               </div>
             </div>

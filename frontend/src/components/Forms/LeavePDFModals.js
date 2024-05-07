@@ -180,24 +180,53 @@ const LeavePDFModals = ({ toast, from }) => {
   const saveLeave = (leave_id) => {
     const pdf = new jsPDF("portrait", "pt", "a2");
     const input = document.getElementById("first-page-" + leave_id);
+    
+    // Get the width and height of the input element
+    const inputWidth = input.offsetWidth;
+    const inputHeight = input.offsetHeight;
+
+    // Set the margins (adjust as needed) 
+    const leftMargin = 50; // Left margin in points
+    const topMargin = 50; // Top margin in points
+
+    // Calculate the available width and height within margins
+    const availableWidth = pdf.internal.pageSize.getWidth() - (2 * leftMargin);
+    const availableHeight = pdf.internal.pageSize.getHeight() - (2 * topMargin);
+
+    // Calculate the aspect ratio of the input element
+    const aspectRatio = inputWidth / inputHeight;
+
+    // Calculate the width and height to fit within margins while maintaining aspect ratio
+    let imgWidth, imgHeight;
+    if (aspectRatio > 1) { // Landscape aspect ratio
+        imgWidth = availableWidth;
+        imgHeight = imgWidth / aspectRatio;
+    } else { // Portrait or square aspect ratio
+        imgHeight = availableHeight;
+        imgWidth = imgHeight * aspectRatio;
+    }
+
+    // Calculate the positioning to center the image within margins
+    const x = leftMargin + (availableWidth - imgWidth) / 2;
+    const y = topMargin + (availableHeight - imgHeight) / 2;
+
     html2canvas(input, {
-      letterRendering: 1,
-      allowTaint: true,
-      logging: true,
-      useCORS: true,
+        letterRendering: 1,
+        allowTaint: true,
+        logging: true,
+        useCORS: true,
     })
-      //By passing this option in function Cross origin images will be rendered properly in the downloaded version of the PDF
-      .then((canvas) => {
-        // document.getElementById("leave-container-" + leave_id).parentNode.style.overflow = 'hidden';
-
+    .then((canvas) => {
+        // Convert the canvas to a data URL
         var imgData = canvas.toDataURL("image/png");
-        // window.open(imgData, "toDataURL() image", "width=800, height=800");
 
-        pdf.addImage(imgData, "JPEG", 35, 50);
+        // Add the image to the PDF with calculated dimensions and positioning
+        pdf.addImage(imgData, "JPEG", x, y, imgWidth, imgHeight);
 
+        // Save the PDF with the specified filename
         pdf.save(`${"leave-" + leave_id}.pdf`);
-      });
-  };
+    });
+};
 
   function get_date(date) {
     if (!date) {
@@ -269,6 +298,36 @@ const LeavePDFModals = ({ toast, from }) => {
         );
     }
     return '';
+}
+function get_ardr_status_element(leave, position = null) {
+  if (!leave) return '';
+  let imageUrl = "";
+  let status = leave.status.toLowerCase();
+  
+  if (position === "ar" && leave.ar_dr_supdt_sig && leave.ar_dr_supdt_sig[0]) {
+      imageUrl = "data:image/png;base64," + String(leave.ar_dr_supdt_sig);
+  } else if (position === "dr" && leave.ar_dr_supdt_sig && leave.ar_dr_supdt_sig[0]) {
+      imageUrl = "data:image/png;base64," + String(leave.ar_dr_supdt_sig);
+  } else if (position === "supdt" && leave.ar_dr_supdt_sig && leave.ar_dr_supdt_sig[0]) {
+      imageUrl = "data:image/png;base64," + String(leave.ar_dr_supdt_sig);
+  } else if (!position && leave.ar_dr_supdt_sig && leave.ar_dr_supdt_sig[0]) {
+      imageUrl = "data:image/png;base64," + String(leave.ar_dr_supdt_sig);
+  }
+
+  if (imageUrl.length) {
+      return (
+          <img
+              style={{
+                  maxHeight: "60px",
+                  maxWidth: "450px",
+                  width: "40%",
+              }}
+              src={imageUrl}
+              alt="Signature"
+          />
+      );
+  }
+  return '';
 }
 
   // function get_office_status_element(leave) {
@@ -554,7 +613,7 @@ const LeavePDFModals = ({ toast, from }) => {
                 <div className="col-6 ">
                   <br />
                   <br />
-                  {get_office_status_element(leave, currentUser?.position)}
+                  {get_ardr_status_element(leave, null)}
                   <br />
                   <br />
                   अधी./सहा.कु ऱसलिव/उऩकु ऱसलिव/Supdt./AR/DR
@@ -617,7 +676,11 @@ const LeavePDFModals = ({ toast, from }) => {
                   <Col>
                     <span style={{ textAlign: "left" }}>Your signature will appear here if you have updated this in you profile section<br /></span>
                     <div className={"signature-box"}>
-                      <img src={sigUrl} />
+                      <img src={sigUrl} style={{
+                        maxHeight: "60px",
+                        maxWidth: "450px",
+                        width: "40%",
+                      }} />
                     </div>
                   </Col>
 
@@ -667,7 +730,7 @@ const LeavePDFModals = ({ toast, from }) => {
             ) : (
               ""
             )}
-            {(from === "check_applications" && (['ar'].includes(currentUser?.position)||['office'].includes(currentUser?.position))) ? (
+            {(from === "check_applications" && (['registrar'].includes(currentUser?.position)||['ar'].includes(currentUser?.position)||['dr'].includes(currentUser?.position)||['supdt'].includes(currentUser?.position)||['office'].includes(currentUser?.position))) ? (
               <>
                 <Row>
                   <Col>
