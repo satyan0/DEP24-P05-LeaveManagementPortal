@@ -21,9 +21,12 @@ CREATE TABLE `pg_leaves` (
   `prefix_suffix` varchar(255) DEFAULT NULL,
   `station_start_date` timestamp NULL DEFAULT NULL,
   `station_end_date` timestamp NULL DEFAULT NULL,
-  `advisor` longblob,
-  `ta_instructor` longblob,
-  `remarks` varchar(200) DEFAULT NULL,
+  `advisor` varchar(255) DEFAULT NULL,
+  `ta_instructor` varchar(255) DEFAULT NULL,
+  `remarks` varchar(255) DEFAULT NULL,
+  `int_status` varchar(255) DEFAULT NULL,
+  `ta_sig` longblob,
+  `advisor_sig` longblob,
   PRIMARY KEY (`leave_id`),
   KEY `leaves_ibfk_3` (`user_id`),
   CONSTRAINT `leaves_ibfk_3` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`)
@@ -59,7 +62,9 @@ CREATE TABLE leaves (
     station_start_date DATE,
     station_end_date DATE,
     authority_comment VARCHAR(200) DEFAULT NULL,
-    withdraw_reason VARCHAR(255) DEFAULT NULL -- Removed the comma at the end
+    withdraw_reason VARCHAR(255) DEFAULT NULL, -- Removed the comma at the end
+    ar_dr_supdt_sig longblob, -- Changed from longblob to LONGTEXT
+    registrar_sig longblob,
 );
 
 
@@ -85,4 +90,18 @@ CREATE TABLE scheduled_jobs (
     job_id VARCHAR(255) NOT NULL,
     job_type VARCHAR(50) NOT NULL,
     run_date DATETIME NOT NULL
+);
+
+CREATE TABLE users (
+    user_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(255),
+    email_id VARCHAR(255) UNIQUE,
+    position VARCHAR(255),
+    department VARCHAR(255),
+    mobile VARCHAR(20),
+    signature LONGBLOB,
+    entry_number VARCHAR(20),
+    ta_instructor VARCHAR(255),
+    advisor VARCHAR(255),
+    temporary_role VARCHAR(50)
 );
