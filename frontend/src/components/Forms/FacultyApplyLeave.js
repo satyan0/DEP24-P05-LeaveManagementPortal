@@ -411,7 +411,7 @@ export default function ApplyLeave({ toast }) {
 
 											<Row className='row-al'>
 												<div className='signature-box'>
-													<img src={sigUrl={
+													<img src={sigUrl} style={{
 														maxHeight: "60px",
 														maxWidth: "450px",
 														width: "40%",

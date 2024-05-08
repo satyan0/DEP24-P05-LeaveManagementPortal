@@ -1562,6 +1562,8 @@ def approve_pg_leave(cursor,temp, leave_id,user, applicant, signature_binary, na
 	print(int_status)
 	# if by in int_status:
 	# 	return int_status  # If already approved, return the existing int_status
+	if int_status and temp in int_status:
+		return int_status  # If both are present, keep the one which is earlier
 	if int_status:
 		int_status += f"|{by}"
 	else:
@@ -1593,15 +1595,11 @@ def approve_pg_leave(cursor,temp, leave_id,user, applicant, signature_binary, na
 @cross_origin(supports_credentials=True)
 def approve_leave():
 	try:
-		print('ikkada')
 		if (not session.get('user_info') or not check_user(session.get('user_info')['email'])):
-			print("11")
 			return get_error_response("Forbidden")
-		print("22")
 		leave_id = request.json['leave_id']
 		applicant_id = request.json['applicant_id']
 		signature = request.json['signature']
-		print("33")
 		try:
 			signature_binary = bytes(signature.values())
 		except:
@@ -1621,6 +1619,8 @@ def approve_leave():
 			advisor = data[4]
 			ta_instructor = data[5]
 			int_status = data[6]
+			if('Disapproved' in int_status):
+				int_status = ''
 			nature = nature.lower().split()
 			nature = '_'.join(nature)
 			temp = ''
