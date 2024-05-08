@@ -1611,6 +1611,7 @@ def approve_leave():
 		applicant = get_user_dic_by_user_id(applicant_id)
 		user_id = applicant_id
 		if 'pg' in applicant['position']:
+			print("coming here")
 			cursor.execute("Select user_id, nature, duration,status, advisor, ta_instructor,int_status  from pg_leaves where leave_id = %s", (leave_id, ))
 			data = cursor.fetchall()[0]
 			nature = data[1]
@@ -1619,7 +1620,7 @@ def approve_leave():
 			advisor = data[4]
 			ta_instructor = data[5]
 			int_status = data[6]
-			if('Disapproved' in int_status):
+			if int_status is not None and 'Disapproved' in int_status:
 				int_status = ''
 			nature = nature.lower().split()
 			nature = '_'.join(nature)

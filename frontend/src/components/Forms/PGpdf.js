@@ -6,8 +6,11 @@ import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import { FaDownload } from "react-icons/fa";
 import { Row, Col } from "react-bootstrap"
+import { useNavigate } from 'react-router-dom';
+
 
 const PGLeavePdfModal = ({ toast, from }) => {
+  const navigate = useNavigate();
   const [leave, setLeave] = useState(null);
   const { currentUser } = useAuth();
   let currentUrl =
@@ -60,6 +63,9 @@ const PGLeavePdfModal = ({ toast, from }) => {
       setTimeout(() => {
         window.location.reload()
       }, 3000);
+      setTimeout(() => {
+        navigate("/navigate/checkapplications");
+      }, 2000);
     } catch (error) {
       console.log(error)
       toast.error(error, toast.POSITION.BOTTOM_RIGHT);
