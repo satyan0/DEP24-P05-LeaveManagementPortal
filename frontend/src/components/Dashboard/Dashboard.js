@@ -36,6 +36,9 @@ export default function Dashboard({ toast }) {
   const [recentApplication, setRecentApplication] = useState(null);
   const [sigUrl, setSigUrl] = useState("");
   const [binarySig, setBinarySig] = useState(null);
+  const [offhodOptions, setOffhodOptions] = useState([]);
+  const [Offhod, setOffhod] = useState(null);
+
   const handleEdit = () => setShowEditProfileModal(!showEditProfileModal);
   const navigate = useNavigate();
 
@@ -96,6 +99,72 @@ export default function Dashboard({ toast }) {
     }
   };
 
+  const fetchOffhodOptions = async () => {
+    try {
+      const resp = await httpClient.post(
+        `${process.env.REACT_APP_API_HOST}/fetchdeptfaculty`,
+        { dept: currentUser.department }
+      );
+      if (resp.status !== 200) {
+        toast.error(resp.data.error, toast.POSITION.BOTTOM_RIGHT);
+        return;
+      }
+      setOffhodOptions(resp.data.data)
+
+      offhodOptions.forEach(element => {
+        if(element.temporary_role == "hod") {
+          setOffhod(true);
+        }
+      });
+      
+    } catch (error) {
+      toast.error("Error fetching officiating HOD options", toast.POSITION.BOTTOM_RIGHT);
+    }
+  }
+
+  const appointOffhod = async (event) => {
+    event.preventDefault();
+
+    const formData = new FormData(event.target);
+    const offHodopt = formData.get("officiatingHODOption");
+    const startDate = formData.get("startDateOffhod");
+    const endDate = formData.get("endDateOffhod");
+    console.log(startDate);
+    try {
+      const resp = await httpClient.post(
+        `${process.env.REACT_APP_API_HOST}/assign_temporary_role`,
+        { email: offHodopt,
+          start_date_str: startDate,
+          end_date_str: endDate
+         }
+      );
+
+      if(resp.status !== 200) {
+        toast.error(resp.data.error, toast.POSITION.BOTTOM_RIGHT);
+        return;
+      }
+      setOffhod(resp.data.offhod);
+    } catch (error) {
+      toast.error("Error appointing officiating HOD", toast.POSITION.BOTTOM_RIGHT);
+    }
+  }
+  const removeOffhod = async () => {
+    try {
+      const resp = await httpClient.post(
+        `${process.env.REACT_APP_API_HOST}/cancel_temporary_role`,
+        { email: Offhod }
+      );
+      if (resp.status !== 200) {
+        toast.error(resp.data.error, toast.POSITION.BOTTOM_RIGHT)
+        return;
+      }
+      setOffhod(null);
+      
+    } catch (error) {
+      toast.error("Error removing officiating HOD options", toast.POSITION.BOTTOM_RIGHT);
+    }
+  }
+
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     const reader = new FileReader();
@@ -115,6 +184,14 @@ export default function Dashboard({ toast }) {
     }
     test();
   }, []);
+  
+  useEffect(() => {
+    // fetch the list of eligible users that can become officiating hod
+    (async function () {
+      // await fetchOffhodOptions();
+    })();
+
+  }, Offhod);
 
   const [month, setMonth] = useState(new Date());
   const numDays = new Date(
@@ -461,7 +538,8 @@ export default function Dashboard({ toast }) {
               <div class="flex flex-col ml-10">
                 <CustomCalendar data={leavesStatus} />
                 <br />
-                <span className="recent-application-title">
+                {!currentUser.position.includes("hod") ? (
+                <><span className="recent-application-title">
                   <div className="text-blue-500  py-2 mt-1">
                   Recent Application{" "}
                   </div>
@@ -535,7 +613,108 @@ export default function Dashboard({ toast }) {
                   ) : (
                     <NoData />
                   )}
-                </div>
+                </div></>):(
+                  <>
+
+{/* change here */}
+
+{Offhod !== null ?
+(
+<div class="max-w-full min-w-full mx-auto bg-white rounded overflow-hidden shadow-md mt-3">
+  <div class="px-4 pt-3">
+    <div class="font-bold text-xl mb-2">Appoint Officiating HOD</div>
+    <form onSubmit={appointOffhod}>
+      <div class="flex flex-col">
+        <div class="relative">
+          <label class="block text-gray-700 text-sm font-bold mb-2">
+            Officiating HOD options
+          </label>
+          <select name="officiatingHODOption" required class="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-1 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
+            <option value="">Select an option</option>
+            {offhodOptions.map((option, index) => (
+              <option key={index} value={option.email}>
+                {option.email}
+              </option>
+            ))}
+          </select>
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+            <svg
+              class="fill-current h-4 w-4"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+            >
+              <path d="M10 12a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm0 2a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0-10a8 8 0 1 0 0 16 8 8 0 0 0 0-16z" />
+            </svg>
+          </div>
+        </div>
+        <div class="flex mt-4">
+          <div class="relative flex-grow mr-2">
+            <label class="block text-gray-700 text-sm font-bold mb-2">
+              Start Date
+            </label>
+            <input
+              name="startDateOffhod"
+              type="date"
+              required
+              class="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+            />
+          </div>
+          <div class="relative flex-grow ml-2">
+            <label class="block text-gray-700 text-sm font-bold mb-2">
+              End Date
+            </label>
+            <input
+              name="endDateOffhod"
+              type="date"
+              required
+              class="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+            />
+          </div>
+        </div>
+        <button
+          type="submit"
+          class="mr-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4 self-end"
+        >
+          Appoint
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+)
+:
+(
+<div class="max-w-full min-w-full mx-auto bg-white rounded-xl overflow-hidden shadow-md">
+  <div class="px-6 py-4">
+    <div class="font-bold text-xl mb-2">Current Officiating HOD</div>
+    <div class="flex items-center justify-between">
+      <div class="flex items-center justify-center">
+        <div class="flex bg-gray-200 rounded-lg p-2 items-center">
+          <p class="text-gray-700 font-semibold m-0">
+            HELLO
+          </p>
+        </div>
+      </div>
+      <div class="flex items-center justify-center">
+        <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded" onClick={removeOffhod}>
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+)
+}
+
+
+
+
+
+
+                  </>
+                )
+                }
               </div>
             </div>
           </div>

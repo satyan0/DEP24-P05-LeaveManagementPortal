@@ -47,12 +47,12 @@ app.config.update(SESSION_COOKIE_SAMESITE="None", SESSION_COOKIE_SECURE=True)
 db = mysql.connector.connect(
 	host="localhost",
 	user="root",
-	passwd="MyNewPass",
-	database="leavem"
+	passwd="mysql123",
+	database="trail"
 )
 
 # Configure the APScheduler with SQLAlchemy job store
-job_store = SQLAlchemyJobStore(url='mysql+mysqlconnector://root:MyNewPass@localhost/leavem')
+job_store = SQLAlchemyJobStore(url='mysql+mysqlconnector://root:mysql123@localhost/trail')
 
 # Create the scheduler with the job store
 scheduler = BackgroundScheduler(jobstores={'default': job_store})
@@ -1737,7 +1737,7 @@ def assign_temporary_role():
             # Close the cursor after consuming all results
             cursor.close()
 
-            return jsonify({'message': f"Temporary HOD status assigned to {email} from {start_date.date()} to {end_date.date()}."}), 200
+            return jsonify({'message': f"Temporary HOD status assigned to {email} from {start_date.date()} to {end_date.date()}.", 'offhod':email}), 200
         else:
             # Close the cursor if the user is not found
             cursor.close()
