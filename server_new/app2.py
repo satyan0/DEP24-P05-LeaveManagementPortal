@@ -1706,6 +1706,7 @@ scheduled_jobs = {}
 
 # Route for assigning temporary role and scheduling the revert job
 @app.route('/assign_temporary_role', methods=['POST'])
+@cross_origin(supports_credentials=True)
 def assign_temporary_role():
     try:
         data = request.json
@@ -1746,6 +1747,7 @@ def assign_temporary_role():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/cancel_temporary_role', methods=['POST'])
+@cross_origin(supports_credentials=True)
 def cancel_temporary_role():
     try:
         data = request.json
@@ -1798,6 +1800,7 @@ def remove_all_jobs():
 
 
 @app.route('/all_scheduled_jobs', methods=['GET'])
+@cross_origin(supports_credentials=True)
 def all_scheduled_jobs():
     try:
         # Get a list of all scheduled jobs
@@ -2047,6 +2050,7 @@ def disapprove_leave():
 
 
 @app.route('/add_comment', methods=['POST'])
+@cross_origin(supports_credentials=True)
 def add_comment():
 	try:
 		if (not session.get('user_info') or not check_user(session.get('user_info')['email'])):
@@ -2071,6 +2075,7 @@ def add_comment():
 		return get_error_response(E)
 
 @app.route('/delete_application', methods=['POST'])
+@cross_origin(supports_credentials=True)
 def delete_application():
 	try:
 		if (not session.get('user_info') or not check_user(session.get('user_info')['email'])):
@@ -2181,6 +2186,39 @@ def get_emails():
 		return get_success_response(payload)
 	except Exception as E:
 		return get_error_response(E)
+
+@app.route('/fetchdeptfaculty', methods=['POST'])
+@cross_origin(supports_credentials=True)
+def fetchdeptfaculty():
+    try:
+        # Check if the user is authenticated
+        if not session.get('user_info') or not check_user(session.get('user_info')['email']):
+            return get_error_response("Forbidden")
+
+        # Extract department from JSON payload
+        department = request.json.get('dept')
+        if department is None:
+            return get_error_response("Department not provided")
+
+        db.reconnect()
+        connect = db
+        cursor = connect.cursor()
+
+        current_user_email = session.get('user_info')['email']
+
+        # Execute SQL query to fetch email_id and temporary_role of users in the specified department
+        cursor.execute('SELECT email_id, temporary_role FROM users WHERE department = %s', (department,))
+        data = cursor.fetchall()
+
+
+        # Return the fetched users' email_id and temporary_role as JSON response
+        payload = [user[0] for user in data if user[0] != current_user_email]
+
+        # Return the JSON response
+        return get_success_response(payload)
+
+    except Exception as e:
+        return get_error_response(str(e))
 
 @app.route('/collective_data', methods=['GET', 'POST'])
 @cross_origin(supports_credentials=True)
