@@ -2200,21 +2200,22 @@ def fetchdeptfaculty():
         if department is None:
             return get_error_response("Department not provided")
 
+        # Reconnect to the database
         db.reconnect()
         connect = db
         cursor = connect.cursor()
 
+        # Get the current user's email
         current_user_email = session.get('user_info')['email']
 
         # Execute SQL query to fetch email_id and temporary_role of users in the specified department
         cursor.execute('SELECT email_id, temporary_role FROM users WHERE department = %s', (department,))
         data = cursor.fetchall()
 
+        # Construct payload containing email_id and temporary_role for users in the specified department
+        payload = [{'email_id': user[0], 'temporary_role': user[1]} for user in data if user[0] != current_user_email]
 
-        # Return the fetched users' email_id and temporary_role as JSON response
-        payload = [user[0] for user in data if user[0] != current_user_email]
-
-        # Return the JSON response
+        # Return the JSON response with success status
         return get_success_response(payload)
 
     except Exception as e:
