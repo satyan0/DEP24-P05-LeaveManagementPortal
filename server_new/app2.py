@@ -47,12 +47,12 @@ app.config.update(SESSION_COOKIE_SAMESITE="None", SESSION_COOKIE_SECURE=True)
 db = mysql.connector.connect(
 	host="localhost",
 	user="root",
-	passwd="mysql123",
-	database="trail"
+	passwd="MyNewPass",
+	database="leavem"
 )
 
 # Configure the APScheduler with SQLAlchemy job store
-job_store = SQLAlchemyJobStore(url='mysql+mysqlconnector://root:mysql123@localhost/trail')
+job_store = SQLAlchemyJobStore(url='mysql+mysqlconnector://root:MyNewPass@localhost/leavem')
 
 # Create the scheduler with the job store
 scheduler = BackgroundScheduler(jobstores={'default': job_store})
@@ -1684,7 +1684,7 @@ def assign_temporary_hod(email):
     connect = db
     cursor = connect.cursor()
     cursor = db.cursor()
-    cursor.execute("UPDATE users SET email_id = 'hod' WHERE id = %s", (email,))
+    cursor.execute("UPDATE users SET temporary_role = 'hod' WHERE id = %s", (email,))
     db.commit()
     cursor.close()
 
@@ -1694,7 +1694,7 @@ def revert_temporary_hod(email):
 		
     connect = db
     cursor = connect.cursor()
-    cursor.execute("UPDATE users SET email_id = NULL WHERE id = %s", (email,))
+    cursor.execute("UPDATE users SET temporary_role = NULL WHERE id = %s", (email,))
     db.commit()
     cursor.close()
 
@@ -1716,6 +1716,7 @@ def assign_temporary_role():
 
         start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
         end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+        today_date = datetime.now()
 
         db.reconnect()
         cursor = db.cursor()
@@ -1724,6 +1725,9 @@ def assign_temporary_role():
 
         if result:
             # Generate unique identifiers for the jobs
+            if today_date >= start_date:
+                assign_temporary_hod(email)
+
             assign_job_id = str(uuid4())
             revert_job_id = str(uuid4())
 
@@ -1763,12 +1767,19 @@ def cancel_temporary_role():
             for result in results:
                 assign_job_id, revert_job_id = result
 
-                # Attempt to remove the scheduled jobs
-                try:
-                    scheduler.remove_job(assign_job_id)
-                    scheduler.remove_job(revert_job_id)
-                except JobLookupError:
-                    pass
+                # Attempt to remove the scheduled jobs if they exist
+                if assign_job_id:
+                    try:
+                        scheduler.remove_job(assign_job_id)
+                    except JobLookupError:
+                        pass
+                if revert_job_id:
+                    try:
+                        scheduler.remove_job(revert_job_id)
+                    except JobLookupError:
+                        pass
+						
+            revert_temporary_hod(email)
 
             # Remove all scheduled jobs for the email from the database
             cursor.execute("DELETE FROM scheduled_jobs WHERE email = %s", (email,))
