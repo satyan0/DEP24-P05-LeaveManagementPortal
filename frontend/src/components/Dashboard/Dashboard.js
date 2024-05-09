@@ -109,11 +109,12 @@ export default function Dashboard({ toast }) {
         toast.error(resp.data.error, toast.POSITION.BOTTOM_RIGHT);
         return;
       }
+      // console.log(resp.data);
       setOffhodOptions(resp.data.data)
 
       offhodOptions.forEach(element => {
         if(element.temporary_role == "hod") {
-          setOffhod(true);
+          setOffhod(element);
         }
       });
       
@@ -136,7 +137,7 @@ export default function Dashboard({ toast }) {
         { email: offHodopt,
           start_date_str: startDate,
           end_date_str: endDate
-         }
+        }
       );
 
       if(resp.status !== 200) {
@@ -188,10 +189,10 @@ export default function Dashboard({ toast }) {
   useEffect(() => {
     // fetch the list of eligible users that can become officiating hod
     (async function () {
-      // await fetchOffhodOptions();
+      await fetchOffhodOptions();
     })();
 
-  }, Offhod);
+  }, [Offhod]);
 
   const [month, setMonth] = useState(new Date());
   const numDays = new Date(
@@ -618,7 +619,7 @@ export default function Dashboard({ toast }) {
 
 {/* change here */}
 
-{Offhod !== null ?
+{Offhod == null ?
 (
 <div class="max-w-full min-w-full mx-auto bg-white rounded overflow-hidden shadow-md mt-3">
   <div class="px-4 pt-3">
@@ -632,8 +633,8 @@ export default function Dashboard({ toast }) {
           <select name="officiatingHODOption" required class="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-1 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
             <option value="">Select an option</option>
             {offhodOptions.map((option, index) => (
-              <option key={index} value={option.email}>
-                {option.email}
+              <option key={index} value={option.email_id}>
+                {option.email_id}
               </option>
             ))}
           </select>

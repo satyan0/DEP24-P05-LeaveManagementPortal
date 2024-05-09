@@ -1711,12 +1711,13 @@ def assign_temporary_role():
     try:
         data = request.json
         email = data.get('email')
-        start_date_str = data.get('start_date')
-        end_date_str = data.get('end_date')
+        start_date_str = data.get('start_date_str')
+        end_date_str = data.get('end_date_str')
 
         start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
         end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
 
+        db.reconnect()
         cursor = db.cursor()
         cursor.execute("SELECT email_id FROM users WHERE email_id = %s", (email,))
         result = cursor.fetchone()
@@ -2209,7 +2210,7 @@ def fetchdeptfaculty():
         current_user_email = session.get('user_info')['email']
 
         # Execute SQL query to fetch email_id and temporary_role of users in the specified department
-        cursor.execute('SELECT email_id, temporary_role FROM users WHERE department = %s', (department,))
+        cursor.execute('SELECT email_id, temporary_role FROM users WHERE department = %s AND position = %s', (department,'faculty'))
         data = cursor.fetchall()
 
         # Construct payload containing email_id and temporary_role for users in the specified department

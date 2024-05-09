@@ -85,11 +85,11 @@ CREATE TABLE leaves_data (
 );
 
 CREATE TABLE scheduled_jobs (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    email VARCHAR(255) NOT NULL,
-    job_id VARCHAR(255) NOT NULL,
-    job_type VARCHAR(50) NOT NULL,
-    run_date DATETIME NOT NULL
+    email VARCHAR(255),
+    assign_job_id VARCHAR(255),
+    revert_job_id VARCHAR(255),
+    start_date DATETIME,
+    end_date DATETIME
 );
 
 CREATE TABLE users (
