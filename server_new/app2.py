@@ -2210,14 +2210,30 @@ def fetchdeptfaculty():
         current_user_email = session.get('user_info')['email']
 
         # Execute SQL query to fetch email_id and temporary_role of users in the specified department
-        cursor.execute('SELECT email_id, temporary_role FROM users WHERE department = %s AND position = %s', (department,'faculty'))
+        
+        cursor.execute('SELECT email_id, temporary_role FROM users WHERE department = %s AND position = %s', (department,"faculty"))
         data = cursor.fetchall()
+
+        
+        cursor.execute('SELECT email FROM scheduled_jobs')
+        temp = cursor.fetchall()
+        
 
         # Construct payload containing email_id and temporary_role for users in the specified department
         payload = [{'email_id': user[0], 'temporary_role': user[1]} for user in data if user[0] != current_user_email]
+		
+        Offhod = None
+        if temp:
+            [temp] = temp
+            for user in data:
+                print(user[0])
+                if(user[0] in temp):
+                    Offhod = user[0]
 
         # Return the JSON response with success status
-        return get_success_response(payload)
+        # return get_success_response(payload)
+	
+        return jsonify({'options': payload, 'Offhod':Offhod}), 200
 
     except Exception as e:
         return get_error_response(str(e))

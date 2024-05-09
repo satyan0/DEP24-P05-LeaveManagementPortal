@@ -109,14 +109,11 @@ export default function Dashboard({ toast }) {
         toast.error(resp.data.error, toast.POSITION.BOTTOM_RIGHT);
         return;
       }
-      // console.log(resp.data);
-      setOffhodOptions(resp.data.data)
+      console.log(resp.data);
+      setOffhodOptions(resp.data.options)
+      console.log(offhodOptions);
 
-      offhodOptions.forEach(element => {
-        if(element.temporary_role == "hod") {
-          setOffhod(element);
-        }
-      });
+      setOffhod(resp.data.Offhod);
       
     } catch (error) {
       toast.error("Error fetching officiating HOD options", toast.POSITION.BOTTOM_RIGHT);
@@ -189,7 +186,9 @@ export default function Dashboard({ toast }) {
   useEffect(() => {
     // fetch the list of eligible users that can become officiating hod
     (async function () {
-      await fetchOffhodOptions();
+      if(currentUser.position.includes("hod")) {
+        await fetchOffhodOptions();
+      }
     })();
 
   }, [Offhod]);
@@ -692,7 +691,7 @@ export default function Dashboard({ toast }) {
       <div class="flex items-center justify-center">
         <div class="flex bg-gray-200 rounded-lg p-2 items-center">
           <p class="text-gray-700 font-semibold m-0">
-            HELLO
+            {Offhod}
           </p>
         </div>
       </div>
