@@ -14,7 +14,7 @@ import "./Table.css";
 import { useNavigate } from "react-router-dom";
 import NoData from "../NoData";
 
-export default function Table({ title, headers, initialData, from }) {
+export default function Table({ title, headers, initialData, remarkData=null, from }) {
   const navigate = useNavigate();
   //to set initial search values = ""
   let initColSearchKey = {};
@@ -229,7 +229,7 @@ export default function Table({ title, headers, initialData, from }) {
                         />
                         {(showPopover == row[0]) && (
                             <div className="min-width-30 overscroll h-48 w-48" style={{ position: 'absolute', bottom: '20px', right: '-15px', backgroundColor: 'white', border: '1px solid black', padding: '5px', zIndex: '999' }}>
-                                {row[7]}
+                                {remarkData[row[0]]}
                             </div>
                         )}
                     </div>        

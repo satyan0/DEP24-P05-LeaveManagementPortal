@@ -18,6 +18,7 @@ export default function PastApplications({ toast }) {
 	const [headers, setHeaders] = useState(headers_temp);
 
 	const [data, setData] = useState(null);
+	const [remarkdata, setRemarkdata] = useState(null);
 
 	const fetchLeaves = async (e) => {
 		try {
@@ -31,6 +32,7 @@ export default function PastApplications({ toast }) {
 			}
 			const temp_data = resp.data.data;
 			let temp = [];
+			let tempremarkdata = {};
 			for (let i = 0; i < temp_data.length; i++) {
 				let status;
 				if (temp_data[i].status.toLowerCase().includes("hod") && temp_data[i].status.toLowerCase().includes("dean")) {
@@ -44,12 +46,14 @@ export default function PastApplications({ toast }) {
 				}
 				// remember last item is for url don't change it
 				if (currentUser.position.includes('pg')) {
-					temp.push([temp_data[i].leave_id, temp_data[i].nature,new Date(temp_data[i].request_date).toDateString(), temp_data[i].start_date?.slice(0, -12), temp_data[i].duration, status, temp_data[i].level, resp.data.data.remarks]);
+					temp.push([temp_data[i].leave_id, temp_data[i].nature,new Date(temp_data[i].request_date).toDateString(), temp_data[i].start_date?.slice(0, -12), temp_data[i].duration, status, temp_data[i].level]);
 				} else {
-					temp.push([temp_data[i].leave_id, temp_data[i].nature,new Date(temp_data[i].request_date).toDateString(), temp_data[i].start_date?.slice(0, -12), temp_data[i].duration, status, temp_data[i].level, resp.data.data.remarks]);
-				}
+					temp.push([temp_data[i].leave_id, temp_data[i].nature,new Date(temp_data[i].request_date).toDateString(), temp_data[i].start_date?.slice(0, -12), temp_data[i].duration, status, temp_data[i].level]);
+				}			
+				tempremarkdata[temp_data[i].leave_id] = temp_data[i].remarks; 
 			}
 			setData(temp);
+			setRemarkdata(tempremarkdata);
 			// console.log(temp);
 		} catch (error) {
 			setData([]);
@@ -72,6 +76,7 @@ export default function PastApplications({ toast }) {
 					title={"Applied Leaves"}
 					headers={headers}
 					initialData={data}
+					remarkData = {remarkdata}
 					from="past_applications"
 				/>
 			) : (
