@@ -228,8 +228,12 @@ export default function Table({ title, headers, initialData, remarkData=null, fr
                             }
                         />
                         {(showPopover == row[0]) && (
-                            <div className="min-width-30 overscroll h-48 w-48" style={{ position: 'absolute', bottom: '20px', right: '-15px', backgroundColor: 'white', border: '1px solid black', padding: '5px', zIndex: '999' }}>
-                                {remarkData[row[0]]}
+                            <div className="overscroll h-32 w-56 block backdrop-saturate-200 backdrop-blur-2xl bg-opacity-75 border border-black/80 px-4 bg-white rounded transition-all sticky py-3 shadow-md shadow-blue-gray-500/5" 
+                            style={{ position: 'absolute', bottom: '20px', right: '-15px', zIndex: '999' }}>
+                                <h6 class="block antialiased tracking-normal font-sans text-base text-left text-neutral-950 text-lg font-semibold leading-relaxed text-blue-gray-900 mb-1">Remark</h6>
+                                <p className="block antialiased tracking-normal font-sans text-base text-left text-neutral-950 text-base leading-relaxed text-blue-gray-900">
+                                  {remarkData[row[0]]}
+                                </p>
                             </div>
                         )}
                     </div>        
