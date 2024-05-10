@@ -171,6 +171,8 @@ export default function Table({ title, headers, initialData, from }) {
     }
   }
 
+  const [showPopover, setShowPopover] = useState(null);
+
   function getActions(title, row) {
     let position = row[row.length - 1],
       status;
@@ -208,6 +210,31 @@ export default function Table({ title, headers, initialData, from }) {
                             }}
                         />
                     ) : null}
+            
+            {row[5].includes("Disapproved") ? (
+                        <div className="" style={{ position: 'relative', display: 'inline-block' }}>
+                        <FaIcons.FaComment
+                            style={{ cursor: 'pointer', marginRight: '5px' }}
+                            color="orange"
+                            onClick={
+                              function () {
+                                if(showPopover == null) {
+                                  setShowPopover(row[0]); // Toggle the visibility of the popover
+                                }
+                                else {
+                                  setShowPopover(null)
+                                }
+                              }
+                            }
+                        />
+                        {(showPopover == row[0]) && (
+                            <div className="min-width-30 overscroll h-48 w-48" style={{ position: 'absolute', bottom: '20px', right: '-15px', backgroundColor: 'white', border: '1px solid black', padding: '5px', zIndex: '999' }}>
+                                {row[7]}
+                            </div>
+                        )}
+                    </div>        
+                    ) : null}
+
             <FaIcons.FaTrash
               style={{ cursor: "pointer" }}
               color="red"
@@ -334,7 +361,7 @@ export default function Table({ title, headers, initialData, from }) {
           </button>
         </div>
         <div className="row">
-          <div className="table-responsive ">
+          <div className="table-responsive overflow-visible">
             <table className="table table-striped table-hover table-bordered">
               <thead>
                 <tr>

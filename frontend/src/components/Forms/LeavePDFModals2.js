@@ -148,9 +148,14 @@ const LeavePDFModalsNonCasual = ({ toast, from }) => {
 
   const disapproveLeave = async (leave_id) => {
     try {
+      const remark = prompt("Enter remarks: ");
+      if (remark === null) {
+        // User clicked cancel
+        return;
+      }
       const resp = await httpClient.post(
         `${process.env.REACT_APP_API_HOST}/disapprove_leave`,
-        { leave_id, applicant_id: leave.user_id }
+        { leave_id, applicant_id: leave.user_id, remarks: remark }
       );
       if (resp.data.status == "error") {
         toast.error(resp.data.emsg, toast.POSITION.BOTTOM_RIGHT);
