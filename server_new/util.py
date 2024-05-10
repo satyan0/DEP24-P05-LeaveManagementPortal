@@ -4,7 +4,7 @@ from email.mime.multipart import MIMEMultipart
 
 admin_mail = "head.dep2023@gmail.com"
 admin_pass = "gthqszvacmcjmunk"
-base_url = "http://172.30.8.214/"
+base_url = "http://172.30.8.216:3000/"
 
 def insert_user_message(columns, values):
     message = "<h3>Your account has been updated for the Leave Management Portal (IIT Ropar) with the following details:</h3>"
