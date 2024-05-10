@@ -568,11 +568,11 @@ def insert_edited_pg_leave(leave, signature, document):
         leave_id = leave['leave_id']
         cursor.execute("UPDATE pg_leaves SET \
             department = %s, nature = %s, purpose = %s, is_station = %s, request_date = %s, start_date = %s, end_date = %s, duration = %s, \
-            status = %s, level = %s, filename = %s, signature = %s, address = %s, venue = %s, duty_start_date = %s, duty_end_date = %s, \
+            status = %s, int_status = %s, level = %s, filename = %s, signature = %s, address = %s, venue = %s, duty_start_date = %s, duty_end_date = %s, \
             prefix_suffix = %s, station_start_date = %s, station_end_date = %s, advisor = %s, ta_instructor = %s, remarks = %s \
             WHERE leave_id = %s",
             (department, leave['nature'], leave['purpose'], leave['is_station'], leave['form_rdate'], leave['start_date'], leave['end_date'], 
-            leave['duration'], 'Pending', position, file_name, signature_binary, leave.get('address'), leave.get('venue'), 
+            leave['duration'], 'Pending', None, position, file_name, signature_binary, leave.get('address'), leave.get('venue'), 
             leave.get('duty_start_date'), leave.get('duty_end_date'), leave.get('prefix_suffix'), leave.get('station_start_date'), 
             leave.get('station_end_date'), leave['form_advisor'], leave['form_ta_instructor'], leave['remarks'], leave_id))
 
@@ -1982,6 +1982,7 @@ def disapprove_leave():
             return get_error_response("Forbidden")
         leave_id = request.json['leave_id']
         applicant_id = request.json['applicant_id']
+        remark = request.json['remarks']
         user = get_user_dic(session['user_info']['email'])
         db.reconnect()
         connect = db
@@ -1998,12 +1999,12 @@ def disapprove_leave():
             if user["position"] == "hod":
                 by = f'Disapproved By Hod-{user["name"]}'
                 cursor.execute(
-                    "UPDATE leaves SET status = %s WHERE leave_id = %s", ('Disapproved', leave_id))
+                    "UPDATE leaves SET status = %s, remarks = %s WHERE leave_id = %s", ('Disapproved', remark, leave_id))
                 connect.commit()
             elif user["position"] == "dean":
                 by = f'Disapproved By Dean-{user["name"]}'
                 cursor.execute(
-                    "UPDATE leaves SET status = %s WHERE leave_id = %s", ('Disapproved', leave_id))
+                    "UPDATE leaves SET status = %s, remarks = %s WHERE leave_id = %s", ('Disapproved', remark, leave_id))
                 connect.commit()
             else:
                 return get_error_response("Leave Status Not Updated")
@@ -2041,7 +2042,7 @@ def disapprove_leave():
             else:
                 curr_int_status = by
             cursor.execute(
-                "UPDATE pg_leaves SET status = %s, int_status=%s WHERE leave_id = %s", ('Disapproved', curr_int_status, leave_id))
+                "UPDATE pg_leaves SET status = %s, int_status=%s, remarks = %s WHERE leave_id = %s", ('Disapproved', curr_int_status, remark, leave_id))
             cols = ["Leave ID", "Status"]
             vals = [leave_id, 'Disapproved']
             message = util.leave_status_message(cols, vals)
