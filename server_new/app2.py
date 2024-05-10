@@ -39,20 +39,20 @@ from datetime import timedelta, datetime
 # cookied handling in response headers
 app.config['SESSION_COOKIE_EXPIRES'] = timedelta(days=7)
 app.config['SESSION_COOKIE_SECURE'] = False
-app.config.update(SESSION_COOKIE_SAMESITE="None", SESSION_COOKIE_SECURE=True)
+app.config.update(SESSION_COOKIE_SAMESITE="None", SESSION_COOKIE_SECURE=False)
 # app.config['SESSION_COOKIE_SAMESITE'] = 'None'
 
 
 
 db = mysql.connector.connect(
-	host="localhost",
+	host="172.23.6.172",
 	user="root",
-	passwd="mysql123",
-	database="trail"
+	passwd="depp05",
+	database="leavem"
 )
 
 # Configure the APScheduler with SQLAlchemy job store
-job_store = SQLAlchemyJobStore(url='mysql+mysqlconnector://root:mysql123@localhost/trail')
+job_store = SQLAlchemyJobStore(url='mysql+mysqlconnector://root:depp05@172.23.6.172/leavem')
 
 # Create the scheduler with the job store
 scheduler = BackgroundScheduler(jobstores={'default': job_store})
@@ -320,7 +320,9 @@ def insert_leave(leave, signature, document):
 				cols.append(util.apply_leave_keys[key])
 				vals.append(leave.get(key))
 		message = util.apply_leave_message(cols, vals)
+		print("whats happen")
 		util.send_email(leave['form_email'], message, "Leave Applied Successfully")
+		print("whats happen")
 		if leave['form_nature'].lower().startswith("casual"):
 			url = f"casual/{new_leave_id}"
 		else:
@@ -1311,10 +1313,11 @@ def check_applications():
 		user_id = data['user_id']
 		department = data['department']
 		position = data['position']
+		temporary_role = data['temporary_role']
 		db.reconnect()
 		connect = db
 		cursor = connect.cursor()
-		if position == "hod":
+		if position == "hod" or temporary_role == "hod":
 			cursor.execute('SELECT * FROM leaves WHERE\
 				department = %s and level = %s', (department, "faculty"))
 			leaves = cursor.fetchall()
@@ -1519,13 +1522,19 @@ def approve_casual_leave(cursor, leave_id,user, applicant, signature_binary, nat
 	return by
 
 def approve_non_casual_leave(cursor, leave_id,user, applicant, signature_binary, nature, type_of_leave, duration, curr_status):
+
 	if user["position"] == "hod" or user["temporary_role"] == "hod":
 		by = f'Approved By Hod-{user["name"]}'
 		new_status = ""
 		if curr_status == 'Pending':
 			new_status = by
 		else:
-			new_status = f"{curr_status}|{by}"
+			if 'Disapproved' in curr_status:
+				print("yes", 'Disapproved' in curr_status)
+				new_status = by  # If 'Disapproved' is present, make new_status empty
+			else:
+				# If 'Disapproved' is not present, append the 'by' information to current status
+				new_status = f"{curr_status}|{by}"
 		cursor.execute(
 			"UPDATE leaves SET status = %s, hod_sig= %s WHERE leave_id = %s", (new_status,signature_binary, leave_id ))
 		cursor.execute("UPDATE users SET signature = %s WHERE user_id = %s", (signature_binary, user["user_id"] ))
@@ -1535,7 +1544,11 @@ def approve_non_casual_leave(cursor, leave_id,user, applicant, signature_binary,
 		if curr_status == 'Pending':
 			new_status = by
 		else:
-			new_status = f"{curr_status}|{by}"
+			if 'Disapproved' in curr_status:
+				new_status = by  # If 'Disapproved' is present, make new_status empty
+			else:
+				# If 'Disapproved' is not present, append the 'by' information to current status
+				new_status = f"{curr_status}|{by}"
 		cursor.execute(
 			"UPDATE leaves SET status = %s, dean_sig= %s WHERE leave_id = %s", (new_status,signature_binary, leave_id ))
 		cursor.execute("UPDATE users SET signature = %s WHERE user_id = %s", (signature_binary, user["user_id"] ))
@@ -1556,6 +1569,7 @@ def approve_non_casual_leave(cursor, leave_id,user, applicant, signature_binary,
 			u_st2, taken_cnt, applicant['user_id'])
 	cursor.execute(query)
 	return by
+
 
 def approve_pg_leave(cursor,temp, leave_id,user, applicant, signature_binary, nature, duration,int_status,should_approve):
 	by = f'Approved By {temp}'
@@ -1684,7 +1698,7 @@ def assign_temporary_hod(email):
     connect = db
     cursor = connect.cursor()
     cursor = db.cursor()
-    cursor.execute("UPDATE users SET temporary_role = 'hod' WHERE id = %s", (email,))
+    cursor.execute("UPDATE users SET temporary_role = 'hod' WHERE email_id = %s", (email,))
     db.commit()
     cursor.close()
 
@@ -1694,7 +1708,7 @@ def revert_temporary_hod(email):
 		
     connect = db
     cursor = connect.cursor()
-    cursor.execute("UPDATE users SET temporary_role = NULL WHERE id = %s", (email,))
+    cursor.execute("UPDATE users SET temporary_role = NULL WHERE email_id = %s", (email,))
     db.commit()
     cursor.close()
 
@@ -1717,19 +1731,23 @@ def assign_temporary_role():
         start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
         end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
         today_date = datetime.now()
+        print(start_date, end_date)
 
         db.reconnect()
         cursor = db.cursor()
         cursor.execute("SELECT email_id FROM users WHERE email_id = %s", (email,))
         result = cursor.fetchone()
+        print(result)
 
         if result:
             # Generate unique identifiers for the jobs
             if today_date >= start_date:
+                print("coming here")
                 assign_temporary_hod(email)
 
             assign_job_id = str(uuid4())
             revert_job_id = str(uuid4())
+            print(assign_job_id, revert_job_id)
 
             # Schedule job to assign temporary HOD role at start date
             assign_job = scheduler.add_job(assign_temporary_hod, 'date', args=[email], run_date=start_date, id=assign_job_id)
@@ -1739,6 +1757,7 @@ def assign_temporary_role():
             cursor.execute("INSERT INTO scheduled_jobs (email, assign_job_id, revert_job_id, start_date, end_date) VALUES (%s, %s, %s, %s, %s)",
                            (email, assign_job_id, revert_job_id, start_date, end_date))
             db.commit()
+            print("happened")
 
             # Close the cursor after consuming all results
             cursor.close()
