@@ -45,14 +45,14 @@ app.config.update(SESSION_COOKIE_SAMESITE="None", SESSION_COOKIE_SECURE=True)
 
 
 db = mysql.connector.connect(
-	host="localhost",
+	host="172.23.7.67",
 	user="root",
-	passwd="mysql123",
-	database="trail"
+	passwd="depp05",
+	database="leavem"
 )
 
 # Configure the APScheduler with SQLAlchemy job store
-job_store = SQLAlchemyJobStore(url='mysql+mysqlconnector://root:mysql123@localhost/trail')
+job_store = SQLAlchemyJobStore(url='mysql+mysqlconnector://root:depp05@172.23.7.67/leavem')
 
 # Create the scheduler with the job store
 scheduler = BackgroundScheduler(jobstores={'default': job_store})
@@ -1311,10 +1311,11 @@ def check_applications():
 		user_id = data['user_id']
 		department = data['department']
 		position = data['position']
+		temporary_role = data['temporary_role']
 		db.reconnect()
 		connect = db
 		cursor = connect.cursor()
-		if position == "hod":
+		if position == "hod" or temporary_role == "hod":
 			cursor.execute('SELECT * FROM leaves WHERE\
 				department = %s and level = %s', (department, "faculty"))
 			leaves = cursor.fetchall()
@@ -1525,7 +1526,12 @@ def approve_non_casual_leave(cursor, leave_id,user, applicant, signature_binary,
 		if curr_status == 'Pending':
 			new_status = by
 		else:
-			new_status = f"{curr_status}|{by}"
+			if 'Disapproved' in curr_status:
+				print("yes", 'Disapproved' in curr_status)
+				new_status = by  # If 'Disapproved' is present, make new_status empty
+			else:
+				# If 'Disapproved' is not present, append the 'by' information to current status
+				new_status = f"{curr_status}|{by}"
 		cursor.execute(
 			"UPDATE leaves SET status = %s, hod_sig= %s WHERE leave_id = %s", (new_status,signature_binary, leave_id ))
 		cursor.execute("UPDATE users SET signature = %s WHERE user_id = %s", (signature_binary, user["user_id"] ))
@@ -1535,7 +1541,12 @@ def approve_non_casual_leave(cursor, leave_id,user, applicant, signature_binary,
 		if curr_status == 'Pending':
 			new_status = by
 		else:
-			new_status = f"{curr_status}|{by}"
+			if 'Disapproved' in curr_status:
+				print("yes", 'Disapproved' in curr_status)
+				new_status = by  # If 'Disapproved' is present, make new_status empty
+			else:
+				# If 'Disapproved' is not present, append the 'by' information to current status
+				new_status = f"{curr_status}|{by}"
 		cursor.execute(
 			"UPDATE leaves SET status = %s, dean_sig= %s WHERE leave_id = %s", (new_status,signature_binary, leave_id ))
 		cursor.execute("UPDATE users SET signature = %s WHERE user_id = %s", (signature_binary, user["user_id"] ))
@@ -1684,7 +1695,7 @@ def assign_temporary_hod(email):
     connect = db
     cursor = connect.cursor()
     cursor = db.cursor()
-    cursor.execute("UPDATE users SET temporary_role = 'hod' WHERE id = %s", (email,))
+    cursor.execute("UPDATE users SET temporary_role = 'hod' WHERE email_id = %s", (email,))
     db.commit()
     cursor.close()
 
@@ -1694,7 +1705,7 @@ def revert_temporary_hod(email):
 		
     connect = db
     cursor = connect.cursor()
-    cursor.execute("UPDATE users SET temporary_role = NULL WHERE id = %s", (email,))
+    cursor.execute("UPDATE users SET temporary_role = NULL WHERE email_id = %s", (email,))
     db.commit()
     cursor.close()
 
