@@ -1,3 +1,17 @@
+CREATE TABLE users (
+    user_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(255),
+    email_id VARCHAR(255) UNIQUE,
+    position VARCHAR(255),
+    department VARCHAR(255),
+    mobile VARCHAR(20),
+    signature LONGBLOB,
+    entry_number VARCHAR(20),
+    ta_instructor VARCHAR(255),
+    advisor VARCHAR(255),
+    temporary_role VARCHAR(50)
+);
+
 CREATE TABLE `pg_leaves` (
   `leave_id` varchar(20) NOT NULL,
   `department` varchar(10) DEFAULT NULL,
@@ -92,16 +106,4 @@ CREATE TABLE scheduled_jobs (
     end_date DATETIME
 );
 
-CREATE TABLE users (
-    user_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(255),
-    email_id VARCHAR(255) UNIQUE,
-    position VARCHAR(255),
-    department VARCHAR(255),
-    mobile VARCHAR(20),
-    signature LONGBLOB,
-    entry_number VARCHAR(20),
-    ta_instructor VARCHAR(255),
-    advisor VARCHAR(255),
-    temporary_role VARCHAR(50)
-);
+

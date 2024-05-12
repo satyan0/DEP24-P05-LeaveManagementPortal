@@ -116,7 +116,6 @@ def insert_user(columns,values):
 	cursor = db.cursor()
 	query = "INSERT INTO users ({}) VALUES ({})".format(
 			', '.join(columns), ', '.join(['%s'] * len(values)))
-	print(query)
 	cursor.execute(query, tuple(values))
 	db.commit()
 	db.close()
@@ -150,7 +149,6 @@ def update_leave_balance(columns,values, user_id, year):
 
 	# Add the condition to the query
 	query += f" WHERE user_id={user_id} and year={year}"
-	print(query)
 	db.reconnect()
 	cursor = db.cursor()
 	cursor.execute(query)
@@ -369,13 +367,11 @@ def check_leave_balance(cursor, user_id, nature, type_of_leave, duration):
                 return False
             cursor.execute(f"SELECT {total_leaves_field}, {taken_leaves_field} FROM leaves_data WHERE user_id = %s", (user_id,))
         elif nature.lower().startswith("non casual"):
-            print("comes here")
             taken_leaves_field = util.leaves_data_map["non_casual_leave"]
             cursor.execute(f"SELECT total_non_casual_leave, {taken_leaves_field} FROM leaves_data WHERE user_id = %s", (user_id,))
         else:
             print("Invalid nature of leave")
             return False
-        print("comes here too")
         row = cursor.fetchone()
         
         if row:
@@ -702,10 +698,8 @@ def leaves_data_util(user_id):
 		for e in default_leaves:
 			values.append(default_leaves[e])
 		values.append(year)
-		print(values)
 		query = "INSERT INTO leaves_data ({}) VALUES ({})".format(
 		', '.join(columns), ', '.join(['%s'] * len(values)))
-		print(query)
 		cursor.execute(query, tuple(values))
 		connect.commit()
 		return default_leaves
@@ -873,7 +867,6 @@ def validate_otp():
 		#print(otp)
 		#print(session['otp'])
 		if str(otp) == str(session['otp']):
-			print("hi1")
 			session['logged_in'] = True
 			session['user_info'] = {
 				"email": email,
@@ -882,7 +875,6 @@ def validate_otp():
 			data = get_user_dic(email=email)
 			session['user_info'].update(data)
 			message = 'OTP Verified!'
-			print("hi")
 			# if 'pg' in data['position']:
 			# 	if not data['ta_instructor'] or not data['advisor'] or not data['entry_number'] or not data['name']:
 			# 		message = 'Kindly Complete Profile Before Applying for Leave!!'
@@ -907,11 +899,9 @@ def login_oauth():
 		if (not check_user(data.get('email'))):
 			return get_error_response("User not Allowed here")
 		session.clear()
-		print("hello1")
 		session['logged_in'] = True
 		session['user_info'] = data
 		session['user_info'].update(get_user_dic(email=data.get('email')))
-		print("hello")
 		message = ''
 		print('session info is ', session['user_info'])
 		# if 'pg' in data['position']:
@@ -938,18 +928,11 @@ def logout():
 @cross_origin(supports_credentials=True)
 def get_user_info():
 	try:
-		# print("getting_user_info")
-		# print(session)
-		# print(session.get('user_info'))
-		# print(check_user(session.get('user_info')['email']))
 		if (not session.get('user_info') or not check_user(session.get('user_info')['email'])):
 			return get_error_response("Forbidden")
 		email = session['user_info']['email'].lower()
-		# print("hiii1")
 		session['user_info'].update(get_user_dic(email=email))
-		# print("hiii2")
 		session['user_info'].update(get_user_signature(email=email))
-		# print("hi3")
 		return get_success_response(session.get('user_info'))
 	except Exception as E:
 		print(E)
@@ -1018,7 +1001,6 @@ def edit_leave():
 			return get_error_response("Forbidden")
 		data = json.loads(request.form.get('data'))
 		signature = data['signature']
-		# print("Signature : ", signature)
 		try:
 			document = request.files['file']
 		except:
@@ -1030,7 +1012,6 @@ def edit_leave():
 		if ret[0] == True:
 			return get_success_response(f"Leave Applied Successfully ID: {ret[1]}")
 		else:
-			print(ret)
 			return get_error_response(f"Leave Application Unsuccessful {ret}")
 	except Exception as E:
 		return get_error_response(f"Leave Application Unsuccessful {E}")
@@ -1061,8 +1042,6 @@ def past_applications():
 		db.reconnect()
 		connect = db
 		cursor = connect.cursor()	
-		# print("this shit")	
-		print("go")
 
 		if 'pg' in position:
 			cursor.execute("SELECT * FROM pg_leaves WHERE user_id = %s", (user_id, ))
@@ -1101,7 +1080,6 @@ def past_applications():
 				other_leaves.append(leave)
 # 		Combine the two lists, with pending leaves at the beginning
 		payload = pending_leaves + other_leaves
-		# print(payload)
 		return get_success_response(payload)
 	except Exception as E:
 		print("not entering past applications")
@@ -1216,18 +1194,15 @@ def get_leave_info_by_id():
 				# 	val = base64.b64encode(val).decode('utf-8')
 				# 	# continue
 				# elif col in ['ta_sig', 'advisor_sig']:
-				# 	print("niggaaaaa")
 				elif col in ['signature', 'ta_sig','advisor_sig', 'hod_sig', 'dean_sig', 'office_sig', 'ar_dr_supdt_sig', 'registrar_sig'] and val is not None:
 					val = base64.b64encode(val).decode('utf-8')
-					# print('nigga')
-					# print("Encoded value of", col, ":", val)
+					
 				
 				
 				content[col] = val
 				# print("Column:", col)  # Debugging output
 
 			applicant = get_user_dic_by_user_id(content['user_id'])
-			# print('whatup')
 			if not get_permission_for_past_applications(position, curr_user_email, applicant.get('email')):
 				return payload
 			content['name'] = applicant['name']
@@ -1622,7 +1597,6 @@ def approve_leave():
 		applicant = get_user_dic_by_user_id(applicant_id)
 		user_id = applicant_id
 		if 'pg' in applicant['position']:
-			print("coming here")
 			cursor.execute("Select user_id, nature, duration,status, advisor, ta_instructor,int_status  from pg_leaves where leave_id = %s", (leave_id, ))
 			data = cursor.fetchall()[0]
 			nature = data[1]
@@ -1815,7 +1789,6 @@ def remove_all_jobs():
         # Remove all jobs from the scheduler
 		
         scheduler.remove_all_jobs()
-        print("done")
 
         return True
     except Exception as e:
@@ -1856,7 +1829,6 @@ def submit_office_signature():
         
         # Check user's position
         position = user.get("position", "")
-        print(position)
         if position in ["ar", "dr", "supdt"]:
             # Set ar_dr_supdt_sig column
             cursor.execute(

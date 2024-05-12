@@ -572,10 +572,9 @@ def validate_otp():
 		email = request.json['email'].lower()
 		print(session)
 		
-		#print(otp)
-		#print(session['otp'])
+		
 		if str(otp) == str(session['otp']):
-			print("hi1")
+			
 			session['logged_in'] = True
 			session['user_info'] = {
 				"email": email,
@@ -584,7 +583,7 @@ def validate_otp():
 			data = get_user_dic(email=email)
 			session['user_info'].update(data)
 			message = 'OTP Verified!'
-			print("hi")
+			
 			# if 'pg' in data['position']:
 			# 	if not data['ta_instructor'] or not data['advisor'] or not data['entry_number'] or not data['name']:
 			# 		message = 'Kindly Complete Profile Before Applying for Leave!!'
@@ -609,11 +608,9 @@ def login_oauth():
 		if (not check_user(data.get('email'))):
 			return get_error_response("User not Allowed here")
 		session.clear()
-		# print("hello1")
 		session['logged_in'] = True
 		session['user_info'] = data
 		session['user_info'].update(get_user_dic(email=data.get('email')))
-		# print("hello")
 		message = ''
 		print('session info is ', session['user_info'])
 		# if 'pg' in data['position']:
@@ -647,11 +644,8 @@ def get_user_info():
 		if (not session.get('user_info') or not check_user(session.get('user_info')['email'])):
 			return get_error_response("Forbidden")
 		email = session['user_info']['email'].lower()
-		print("hiii1")
 		session['user_info'].update(get_user_dic(email=email))
-		print("hiii2")
 		session['user_info'].update(get_user_signature(email=email))
-		print("hi3")
 		return get_success_response(session.get('user_info'))
 	except Exception as E:
 		print(E)
@@ -739,7 +733,6 @@ def past_applications():
 		db.reconnect()
 		connect = db
 		cursor = connect.cursor()		
-		# print("go")
 
 		if 'pg' in position:
 			cursor.execute("SELECT * FROM pg_leaves WHERE user_id = %s", (user_id, ))
@@ -766,7 +759,6 @@ def past_applications():
 			payload.append(content)
 
 		connect.close()
-		print("done")
 		sorted_leaves = sorted(payload, key=lambda k: k['leave_id'], reverse=True)
 		pending_leaves = []
 		other_leaves = []
