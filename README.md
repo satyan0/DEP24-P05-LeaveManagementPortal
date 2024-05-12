@@ -45,10 +45,15 @@ To run the frontend
 
 To run the server
 > cd server_new
+ 
 > pip install virtualenv
+ 
 > virtualenv venv
+ 
 > venv\Scripts\activate
+ 
 > pip install -r requirements.txt
+
 > python app2.py
 
 To setup database, install MySQL workbench and command line terminal, follow the setup process for mySQL, 
