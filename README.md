@@ -5,10 +5,10 @@
 Group P05
 
 Members:<br>
-Satya Namani        2021CSB1112
-Darshan Kawale      2021CSB1080
-Komalpreet Singh    2021CSB1237
-Ritesh Patil        2021CSB1120
+Satya Namani        2021CSB1112<br>
+Darshan Kawale      2021CSB1080<br>
+Komalpreet Singh    2021CSB1237<br>
+Ritesh Patil        2021CSB1120<br>
 
 ## Submitted To
 Dr. Puneet Goyal <br>
