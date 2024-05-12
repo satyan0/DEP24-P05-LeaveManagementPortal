@@ -39,20 +39,20 @@ from datetime import timedelta, datetime
 # cookied handling in response headers
 app.config['SESSION_COOKIE_EXPIRES'] = timedelta(days=7)
 app.config['SESSION_COOKIE_SECURE'] = False
-app.config.update(SESSION_COOKIE_SAMESITE="None", SESSION_COOKIE_SECURE=True)
+app.config.update(SESSION_COOKIE_SAMESITE="None", SESSION_COOKIE_SECURE=False)
 # app.config['SESSION_COOKIE_SAMESITE'] = 'None'
 
 
 
 db = mysql.connector.connect(
-	host="172.23.7.67",
+	host="172.22.14.115",
 	user="root",
 	passwd="depp05",
 	database="leavem"
 )
 
 # Configure the APScheduler with SQLAlchemy job store
-job_store = SQLAlchemyJobStore(url='mysql+mysqlconnector://root:depp05@172.23.7.67/leavem')
+job_store = SQLAlchemyJobStore(url='mysql+mysqlconnector://root:depp05@172.22.14.115/leavem')
 
 # Create the scheduler with the job store
 scheduler = BackgroundScheduler(jobstores={'default': job_store})
@@ -1768,6 +1768,7 @@ def cancel_temporary_role():
     try:
         data = request.json
         email = data.get('email')
+        db.reconnect()
 
         cursor = db.cursor()
         cursor.execute("SELECT assign_job_id, revert_job_id FROM scheduled_jobs WHERE email = %s", (email,))
